@@ -1,23 +1,44 @@
+"""Document analysis using the Anthropic API."""
+
+import logging
 import os
 from dataclasses import dataclass
 
 import anthropic
-from anthropic.types import MessageParam, TextBlock
 import click
+from anthropic.types import MessageParam, TextBlock
 from opentelemetry import trace
 
 from quill.cache import ResponseCache
+
+__all__ = ["AnalysisResult", "analyze_document"]
+
+logger = logging.getLogger(__name__)
 
 tracer = trace.get_tracer("quill.analyzer")
 
 
 @dataclass
 class AnalysisResult:
+    """Result of a document analysis.
+
+    Attributes:
+        text: The analysis text from the model.
+        role: The persona used for analysis.
+        model: The model identifier.
+        input_tokens: Input tokens consumed (zero on cache hit).
+        output_tokens: Output tokens consumed (zero on cache hit).
+        cache_hit: Whether the result was served from cache.
+        truncated: Whether the API response was truncated.
+    """
+
     text: str
     role: str
     model: str
     input_tokens: int
     output_tokens: int
+    cache_hit: bool = False
+    truncated: bool = False
 
 
 SENIOR_PARTNER_PROMPT = """\
@@ -39,6 +60,17 @@ Concrete suggestions for terms to negotiate, modify, or add before execution.\
 
 
 def analyze_document(text: str) -> AnalysisResult:
+    """Analyze a legal document using the Anthropic API.
+
+    Args:
+        text: The document text to analyze.
+
+    Returns:
+        An AnalysisResult with the model's assessment.
+
+    Raises:
+        click.ClickException: On missing API key or API errors.
+    """
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise click.ClickException(
@@ -78,7 +110,15 @@ def analyze_document(text: str) -> AnalysisResult:
                 raise click.ClickException("Could not connect to the Anthropic API. Check your network connection.")
             except anthropic.APIError as e:
                 raise click.ClickException(f"Anthropic API error: {e}")
-            cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
+
+            try:
+                cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
+            except OSError:
+                logger.warning("Failed to write cache, continuing with result")
+
+        truncated = response.stop_reason == "max_tokens"
+        if truncated:
+            logger.warning("Response was truncated (max_tokens reached)")
 
         content_block = next(
             (b for b in response.content if isinstance(b, TextBlock)), None
@@ -86,10 +126,16 @@ def analyze_document(text: str) -> AnalysisResult:
         if content_block is None:
             raise click.ClickException("Unexpected response format from Anthropic API.")
 
+        analysis_text = content_block.text
+        if truncated:
+            analysis_text += "\n\n---\n*Note: This analysis was truncated due to length constraints.*"
+
         return AnalysisResult(
-            text=content_block.text,
+            text=analysis_text,
             role=role,
             model=response.model,
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
+            input_tokens=response.usage.input_tokens if not cache_hit else 0,
+            output_tokens=response.usage.output_tokens if not cache_hit else 0,
+            cache_hit=cache_hit,
+            truncated=truncated,
         )

@@ -1,3 +1,5 @@
+"""OpenTelemetry tracing setup for Quill."""
+
 import os
 
 from opentelemetry import trace
@@ -7,12 +9,22 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+__all__ = ["init_tracing", "shutdown_tracing"]
 
 _provider: TracerProvider | None = None
 
 
 def init_tracing() -> TracerProvider:
+    """Initialize OpenTelemetry tracing.
+
+    Idempotent: returns the existing provider if already initialized.
+
+    Returns:
+        The active TracerProvider.
+    """
     global _provider
+    if _provider is not None:
+        return _provider
 
     from quill import __version__
 
@@ -39,6 +51,7 @@ def init_tracing() -> TracerProvider:
 
 
 def shutdown_tracing() -> None:
+    """Shut down the tracer provider and flush pending spans."""
     global _provider
     if _provider is not None:
         _provider.shutdown()

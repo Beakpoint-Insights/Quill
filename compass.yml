@@ -1,6 +1,6 @@
 name: Quill
 id: 'ari:cloud:compass:5fce4cfe-d9f7-426b-a473-fb0e6f7431df:component/da63e7b3-f9d2-4bf1-9d94-b41c639cd631/90d3d948-0f70-4ecb-a333-4c2a40fa8d7f'
-description: "AI-powered legal document analyzer that routes work across multiple LLM providers and model tiers, mirroring how a law firm staffs tasks from clerk to senior partner. Built to showcase Beakpoint's token usage tracking, multi-model cost attribution, and per-project spend analysis using real OpenTelemetry instrumentation."
+description: 'AI-powered legal document analyzer that routes work across multiple LLM providers and model tiers, mirroring how a law firm staffs tasks from clerk to senior partner. Built to showcase Beakpoint token usage tracking, multi-model cost attribution, and per-project spend analysis using real OpenTelemetry instrumentation.'
 configVersion: 1
 typeId: APPLICATION
 ownerId: 'ari:cloud:identity::team/540658de-11e8-46ee-a34c-63cce31a6d9d'

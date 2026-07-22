@@ -206,9 +206,7 @@ async def _analyze_role(
         def _run_with_context() -> AnalysisResult:
             token = otel_context.attach(ctx)
             try:
-                return analyze_document(
-                    text, role, api_key=api_key, no_cache=no_cache
-                )
+                return analyze_document(text, role, api_key=api_key, no_cache=no_cache)
             finally:
                 otel_context.detach(token)
 

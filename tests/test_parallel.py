@@ -215,9 +215,7 @@ class TestTraceContinuity:
     """All role spans share the same trace as the parent quill.analyze_all span."""
 
     def test_all_roles_share_single_trace(self) -> None:
-        env = {
-            k: v for k, v in os.environ.items() if not k.startswith("OTEL_EXPORTER")
-        }
+        env = {k: v for k, v in os.environ.items() if not k.startswith("OTEL_EXPORTER")}
         script = """
 from unittest.mock import patch
 from anthropic.types import Message, TextBlock, Usage
@@ -280,8 +278,7 @@ for child in child_spans:
         )
         if result.returncode != 0:
             pytest.fail(
-                f"Subprocess failed:\nstdout: {result.stdout}\n"
-                f"stderr: {result.stderr}"
+                f"Subprocess failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
             )
 
 

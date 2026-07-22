@@ -150,9 +150,7 @@ def test_analyze_default_role_is_senior_partner(monkeypatch, anthropic_response)
     assert result.role == "Senior Partner"
 
 
-def test_analyze_no_cache_bypasses_cache(
-    monkeypatch, anthropic_response, _no_cache
-):
+def test_analyze_no_cache_bypasses_cache(monkeypatch, anthropic_response, _no_cache):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
     with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
@@ -212,12 +210,8 @@ def test_analyze_sets_token_usage_on_span(monkeypatch, anthropic_response):
 
         analyze_document("Some text")
 
-        mock_span.set_attribute.assert_any_call(
-            "gen_ai.usage.input_tokens", 1200
-        )
-        mock_span.set_attribute.assert_any_call(
-            "gen_ai.usage.output_tokens", 85
-        )
+        mock_span.set_attribute.assert_any_call("gen_ai.usage.input_tokens", 1200)
+        mock_span.set_attribute.assert_any_call("gen_ai.usage.output_tokens", 85)
 
 
 def test_analyze_sets_zero_tokens_on_cache_hit(
@@ -247,9 +241,5 @@ def test_analyze_sets_zero_tokens_on_cache_hit(
         result = analyze_document("Cached text")
 
         assert result.cache_hit is True
-        mock_span.set_attribute.assert_any_call(
-            "gen_ai.usage.input_tokens", 0
-        )
-        mock_span.set_attribute.assert_any_call(
-            "gen_ai.usage.output_tokens", 0
-        )
+        mock_span.set_attribute.assert_any_call("gen_ai.usage.input_tokens", 0)
+        mock_span.set_attribute.assert_any_call("gen_ai.usage.output_tokens", 0)

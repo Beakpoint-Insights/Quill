@@ -1,0 +1,243 @@
+# Privacy Policy
+
+<div class="summary-highlight"><strong>Summary</strong>: We are committed to protecting your privacy as described in this Privacy Policy.</div>
+
+Desmos Studio PBC (**“Desmos”**, **“we”**, **“us”**, and **“our”**) is committed to protecting your privacy. This Privacy Policy describes our collection and use of personal information collected from visitors to our website and our mobile application(s) (collectively, our **“Services”**), including the Services offered at desmos.com, our mobile apps and any other website, app, or online service which links to this Privacy Policy. **“You”** or **“your”** means a visitor or a user (whether logged in or not) of our Service.
+
+This Privacy Policy is incorporated into and is subject to our [Terms of Service](/terms), which governs your use of the Services.
+
+Click on the links below to jump to a subsection of this Privacy Policy.
+
+1. [Our Services](#services)
+2. [Student Data](#student-data)
+3. [Personal Data Processed Through Desmos Professional](#professional-data)
+4. [Information Collected](#information-collected)
+5. [Use of Your Information](#use-of-information)
+6. [Disclosure of Your Information](#disclosure-of-info)
+7. [Your Choices and Rights](#choices)
+8. [Data Security](#data-security)
+9. [How Long We Keep Your Information](#keep-information)
+10. [Children’s Privacy](#childrens-privacy)
+11. [For Our International and California Users](#international)
+12. [Contact Us](#contact-us)
+13. [Changes and Updates](#changes-and-updates)
+
+<h2 id="services">1. Our Services</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: Our various Services collect and process information in different ways. We define each Service below to help you understand how each Service may collect and use information from or about you as further described in this Privacy Policy.</div>
+
+Our Services include the following **“Desmos Tools”**:
+
+- Web-based versions of the [Desmos Scientific Calculator](/scientific), [Desmos Four Function Calculator](/fourfunction), and [Desmos Matrix Calculator](/matrix) (the **“Simple Desmos Tools”**); and
+- The web-based [Desmos Graphing Calculator](/calculator), [Desmos Geometry Tool](/geometry), [3D Calculator](/3d), [Desmos Notebook](/notebook), future standalone tools to come, and any apps associated with the foregoing, including (i) the Desmos Graphing application, available on Android and iOS; (ii) the Desmos Scientific Calculator application, available on Android and iOS; and (iii) the Desmos Test Mode application, available on iOS for iPads (together, the **“Advanced Desmos Tools”**).
+
+Our Services also include the following on a paid basis:
+
+- **Desmos Professional**: our paid, subscription-based offering that enables individuals and organizations to use Desmos Tools and other tools made available within Desmos Professional from time to time, in a private, collaborative environment with features such as shared folders, private links, and team management.
+- **Desmos API**: the services, software, and products made available by Desmos through the application programming interface using an API Key (the **“API Service”**). The API Service enables integration of Desmos calculators, graphs, and other content into your own applications.
+
+<h2 id="student-data">2. Student Data</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: If you or your School provides us with Student Data in connection with the Advanced Desmos Tools, your School is acting as the data controller for the Student Data, and our processing of such Student Data is governed by our agreements with your School. Such agreements may impose greater obligations on Desmos than described in this Privacy Policy.</div>
+
+Our Advanced Desmos Tools may be used by third party providers of educational services, such as schools, school districts, school systems, teachers or other instructors (collectively referred to as **“Schools”**).
+
+When Desmos contracts with a School to provide Services including Advanced Desmos Tools to students of the School (**“Students”**), we may have access to Student Data (defined below). We consider Student Data to be highly confidential and our processing of Student Data is governed by our Student Data Privacy Statement, our Terms of Service and/or our written agreements with the applicable School.
+
+Please see our [Student Data Privacy Statement](/studentdata) for additional information about how we collect and use Student Data gathered during the provision of the Service to Schools.
+
+If you represent a School in the United Kingdom or European Economic Area, you can review our standard, template DPA with attached SCCs [here](https://www.desmos.com/static-assets/privacy-pdfs/Desmos_DPA_and_SCC_2023-03-28_v5.pdf). If the School would like to enter into that DPA (and attached SCCs) with us, please send an email to [privacy-gdpr@desmos.com](mailto:privacy-gdpr@desmos.com), with the following information about the school: (i) name, (ii) address, (iii) telephone number, (iv) signatory name, (v) signatory title, and (vi) signatory email address, and (vii) domain name for staff and student email address account usernames. We will then send the school’s signatory a copy of the DPA for electronic signatures, and arrange for signature by Desmos’ authorized representative.
+
+<h2 id="professional-data">3. Personal Data Processed Through Desmos Professional</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: If you subscribe to Desmos Professional and we process personal data on your behalf in connection with your use of Desmos Professional, you are acting as the data controller for that personal data, and our processing is governed by our agreements with you. Such agreements may impose greater obligations on Desmos than described in this Privacy Policy.</div>
+
+Desmos Professional may be used by individuals and organizations (each, a **“Customer”**) to access and use Desmos tools in a private, collaborative environment. When you subscribe to Desmos Professional, you and your Authorized Users may submit, upload, store, or otherwise make available through Desmos Professional content that includes personal data (**“Customer Personal Data”**).
+
+For Customer Personal Data, you are the data controller and Desmos acts as a data processor (or, for U.S. state law purposes, service provider or its equivalent) on your behalf. We treat Customer Personal Data as confidential. Desmos’s substantive commitments as processor, including restrictions on use, business purposes, data subject request assistance, subprocessor obligations, security incident notification, and treatment of sensitive personal information, are governed by our [Desmos Professional Terms of Service](/professional-terms), this Privacy Policy, and, if executed by you and Desmos, the Professional Data Processing Addendum (the “Professional DPA”), whether on our form or your form as agreed between the parties. 
+
+For customers in the United Kingdom or European Economic Area, the Professional DPA includes Standard Contractual Clauses (SCCs).
+
+<h2 id="information-collected">4. Information Collected</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We collect personal information that you voluntarily provide to us such as name, email.</div>
+
+a. **Personal Data You Disclose to Us**. You can use many of our Services without registering for an account with Desmos. If you choose to create an account on the Service, or communicate with Desmos, you may provide to Desmos certain information by which someone could personally identify you, such as your name, email or unique username (**“Personally Identifiable Information”**), passwords and similar information used for authentication and account access (**“Security Information”**), as well as information about yourself such as your employment or level of schooling by which someone could not personally identify you (**“Demographic Information”**). When we link Security Information or Demographic Information to your Personally Identifiable Information, we treat all of it as Personally Identifiable Information. We also collect information (i) when you save or post content to the Service, (ii) if you expressly authorize us to access your device camera and photo roll to upload pictures to the Service, and (iii) and if you communicate with us via email or otherwise.
+
+We refer to all of this data collectively as **“Personal Data”**. We may also collect limited Personal Data about you from a third party Internet site or service. For example, if you login to your Desmos account through Google or another authentication tool, or if you interact with Desmos on social media, we may collect the Personal Data you authorize that third party service to share with us, such as email address or name.
+
+We do **not** knowingly collect: (i) exact geolocation data, (ii) behavioral data for advertising purposes, (iii) biometric / health data, or (iv) sensitive data, as defined under the General Data Protection Regulation (GDPR) (including, racial or ethnic origin, political opinions, religious or philosophical beliefs, or trade-union membership, and the processing of genetic data, biometric data for the purpose of uniquely identifying a natural person, data concerning health or data concerning a natural person's sex life or sexual orientation).
+
+<div class="summary-highlight"><strong>Summary</strong>: Some information – such as IP address and/or browser and device characteristics – is collected automatically when you visit our websites or apps.</div>
+
+b. **Usage Data**. We automatically collect certain technical usage information when you use our Service (**“Usage Data”**). Usage Data includes the information that your web browser or mobile application automatically sends to our servers whenever you visit. The Usage Data collected in our logs may include information such as your web request, Internet Protocol address, operating system, browser type, browser language, referring / exit pages and URLs, platform type, click history, domain names, landing pages, pages viewed and the order of those pages, the amount of time spent on particular pages, the date and time of your request, and whether you opened an email. Typically, this information is collected through log files, web beacons, browser cookies, or other device identifiers that may uniquely identify your browser or device.
+
+You may be able to set your web browser to refuse all cookies, and your mobile device to not provide your mobile device identifier. You may not be able to delete or disable cookies on certain mobile devices and/or certain browsers. For more information on cookies, please review the Desmos Cookie Policy or [www.allaboutcookies.org](https://www.allaboutcookies.org/). Remember, some features of our Service may not function properly if cookies or mobile device identifiers are not enabled. In addition, our Service may use third party analytics and bug tracking software (including, without limitation, Google Analytics and Bugsnag) to collect further Usage Data regarding the online usage patterns of our users and bugs in our Services. We may combine Usage Data with Personal Data in a manner that enables us to trace Usage Data to an individual user. If we do so, we will treat such combined data as Personal Data.
+
+**We do not authorize third party advertising networks or other third parties to collect information about your browsing behavior from our website for advertising purposes.**
+
+<h2 id="use-of-information">5. Use of Your Information</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We process your Personal Data for purposes based on legitimate business interests, the fulfillment of our contract with you, compliance with our legal obligations, and/or your consent.</div>
+
+We use Personal Data and Usage Data (together, **“User Information”**) for a variety of business purposes described below. We process your Personal Data for these purposes in reliance on our legitimate business interests (**“Business Purposes”**), in order to enter into or perform a contract with you (**“Contractual”**), with your consent (**“Consent”**), and/or for compliance with our legal obligations (**“Legal Reasons”**). We indicate the specific processing grounds we rely on next to each purpose listed below.
+
+**To facilitate account creation and logon process with your Consent.** If you choose to link your account with us to a third party account (such as your Google account), we use the information you allowed us to collect from those third parties to facilitate the account creation and logon process. Where you choose to do this, we will receive certain profile information about you from your social media provider. The profile information we receive may vary depending on the social media provider concerned, but will often include your name and e-mail address.
+
+**To enforce our terms, conditions and policies for Business Purposes and Legal Reasons.**
+
+**To respond to legal requests and prevent harm for Legal Reasons.** If we receive a subpoena or other legal request, we may need to inspect the User Information we hold to determine how to respond.
+
+**For other Business Purposes.** We may use your User Information for other Business Purposes, such as (a) improving the quality and design of the Services and to create new features and services by storing, tracking, and analyzing user preferences; (b) remembering information so that you will not have to re-enter it during your visit or the next time you use our Service; (c) providing custom, personalized content and information; (d) monitoring aggregate metrics such as total number of visitors, pages viewed, etc.; (e) diagnosing and fixing technology problems and otherwise planning for and enhancing our Service and (f) for providing you with customer support. Desmos may provide personalized content and information to our users, including Students, teachers, school administration officials, other users associated with Schools and users of Desmos Professional and Desmos API. However, Desmos shall never use Student Data or Customer Personal Data to engage in targeted advertising or 'cross-context behavioral advertising' (as defined under applicable state privacy laws), nor shall Desmos ever sell or share (as those terms are defined under applicable state privacy laws) Student Data or Customer Personal Data, or use any third-party advertising network on any Desmos Service. Notwithstanding the foregoing, our use of Customer Personal Data (as defined in Section 3) is limited as described in Section 3 above and the Professional DPA (if executed).
+
+**For Marketing Messages, with your consent.** We will not use your email address or other Personal Data to send you marketing messages unless you provide your consent, or as part of a specific program or feature for which you will have the ability to opt-out. You can always opt-out of receiving promotional email from us by clicking on the “unsubscribe” feature at the bottom of each email. We may, however, use your email address without further consent for non-marketing or administrative purposes, such as notifying you of important Service changes or for customer service purposes.
+
+<h2 id="disclosure-of-info">6. Disclosure of Your Information</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We only share information with your consent, to comply with laws, to protect your rights, or to fulfill business obligations.</div>
+
+a. _Your Publication_.
+You may, by using applicable sections of our Services (including sections which enable you to create graphs, perform lessons, provide comments, upload video and pictures), share your User Information, including Personally Identifiable Information and other content that you create or post to others accessing the Services. Please see the [Student Data Privacy Statement](/studentdata) to learn how Student Data may be shared. This section 6(a) addresses publication through public-facing features of the Desmos Tools; sharing of Customer Personal Data within Desmos Professional is private by default and is governed by Sections 3 and 6(b) of this Privacy Policy and the Professional DPA, if executed.
+
+b. _Service Providers_.
+We share the information we collect, including Personal Data, with our third-party sub-processors in order to provide our Services. We enter into contracts with all third-party entities or agents that participate in an onward transfer of Personal Data. The contracts specify that such Personal Data may only be processed for limited and specified purposes consistent with the consent provided by the individual, applicable laws, and that the recipient will provide the same level of protection as stated in this Privacy Policy. These sub-processors are used to perform services on our behalf, for example, providing customer service support, hosting services, analytics, bug detection and other services we utilize to help us provide our Services or conduct our business. With respect to Customer Personal Data processed in connection with Desmos Professional, our sub-processor obligations are set forth in Section 6 of our [Desmos Professional Terms of Service](/professional-terms).
+
+Our list of sub-processors can be found [here](https://github.com/desmosinc/policies/blob/main/third-party-services.md).
+
+c. _Partners_.
+At your direction, our partners (**“Partners”**) that are integrated with the Desmos Services may gain access to certain of your User Information. For example, we may share certain User Information (e.g., your email address username) when you login to the Desmos Services using Google login and similar authentication tools. We are not responsible for the content or privacy and security practices and policies of such Partners. We encourage you to learn about our Partners' privacy and security policies before providing them with your User Information or directing us to provide them with your User Information.
+
+d. _Other Required Sharing_.
+We may share User Information: (i) if required to do so by law, or in the good-faith belief that such action is in compliance with state and federal laws (including, without limitation, copyright laws) or in response to a court order, subpoena, legal process or search warrant, or (ii) if we believe, in good faith, such action is appropriate or necessary to enforce our Terms of Service, to exercise our legal rights, to take precautions against liability, to investigate and defend ourselves against any claims or allegations, to assist government enforcement agencies, to protect the security or integrity of our Services, and to protect the rights, property, or personal safety of Desmos, Schools, our users or third parties.
+
+e. _School Collaboration_.
+We may share Student Data as directed by a School when we provide Services to such School. Please see our Student [Data Privacy Statement](/studentdata) to learn more about how Student Data may be shared at the direction of the School.
+
+f. _Merger or Sale_.
+If we merge, sell, or otherwise transfer all or a portion of our business, we will not transfer your Personal Information without first giving you the ability to opt-out of the transfer, unless the new owner intends to maintain and provide the applicable Services as a going concern, and provided that the new owner has agreed to data privacy standards no less stringent than our own. We may also transfer Personal Information – under the same conditions – in the course of mergers, acquisitions, bankruptcies, dissolutions, reorganizations, liquidations, similar transactions or proceedings involving all or a portion of our business.
+
+<h2 id="choices">7. Your Choices and Rights</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: You may choose not to provide Personal Data, you may review, change, or terminate your account at any time.</div>
+
+You may decline to submit Personal Data through and to our Service, in which case Desmos may not be able to provide certain parts of the Service to you. You may update or correct your name, email address, or password at any time by visiting your “Account Settings” link. You may also delete your account altogether there, which will remove all Personal Data we have collected about you. If you have any questions about reviewing, modifying, or deleting your information, or if you want to remove your name or comments from our website or publicly displayed content, you can contact us directly at [privacy@desmos.com](mailto:privacy@desmos.com). We may not be able to modify or delete your information in all circumstances.
+
+In some regions (like the European Economic Area), you have certain rights under applicable data protection laws. These may include the right (i) to request access and obtain a copy of your Personally Identifiable Information, (ii) to request rectification or erasure; (iii) to restrict the processing of your Personally Identifiable Information; and (iv) if applicable, to data portability. In certain circumstances, you may also have the right to object to the processing of your Personally Identifiable Information. To make such a request, please use the contact details provided below. We will consider and act upon any request in accordance with applicable data protection laws.
+
+If we are relying on your consent to process your Personal Data, you have the right to withdraw your consent at any time. Please note however that this will not affect the lawfulness of the processing before its withdrawal.
+
+If you are a resident in the European Economic Area and believe we are unlawfully processing your Personal Data, you also have the right to complain to your local data protection supervisory authority (contact details here: [http://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm](http://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm)).
+
+**General Data Protection Regulation (GDPR) – European Representative**
+
+Pursuant to Article 27 of the General Data Protection Regulation (GDPR), Desmos Studio PBC has appointed European Data Protection Office (EDPO) as its GDPR Representative in the EU. You can contact EDPO regarding matters pertaining to the GDPR:
+
+- by using EDPO’s online request form: [https://edpo.com/gdpr-data-request/](https://edpo.com/gdpr-data-request/)
+- by writing to EDPO at Avenue Huart Hamoir 71, 1030 Brussels, Belgium
+
+**UK General Data Protection Regulation (GDPR) - UK Representative**
+
+Pursuant to Article 27 of the UK GDPR, Desmos Studio PBC has appointed EDPO UK Ltd as its UK GDPR representative in the UK. You can contact EDPO UK regarding matters pertaining to the UK GDPR:
+
+- by using EDPO’s online request form: [https://edpo.com/uk-gdpr-data-request/](https://edpo.com/uk-gdpr-data-request/)
+- by writing to EDPO UK at Unit 33, Waterside, Schooner Court, 44-48 Wharf Road, London, N1 7UX, United Kingdom
+
+If you are an Authorized User of Desmos Professional, your account is administered by the Customer organization that has subscribed to Desmos Professional on your behalf, and that organization may have the ability to provision, deprovision, or modify your access. For requests relating to your Customer Personal Data, please contact your organization's Administrator or, if you are unable to do so, contact us at [privacy@desmos.com](mailto:privacy@desmos.com) and we will work with your organization to address the request as required by applicable law.
+
+<h2 id="data-security">8. Data Security</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We aim to protect your Personal Data through a system of organizational and technical security measures.</div>
+
+We care about the security of your Personal Data and employ physical, administrative, contractual, and technological safeguards designed to preserve the integrity and security of all information collected through our Service. Access to information is limited (through user/password credentials and, in some cases, two factor authentication) to those employees who require it to perform their job functions. We use industry standard SSL (secure socket layer technology) encryption to transfer Personal Data. Other security safeguards include but are not limited to data encryption, firewalls, physical access controls to buildings and files, and employee training. In addition, we enter into contracts with all third-party entities or agents that participate in an onward transfer of Personal Data, and seek contractual security assurances from such third parties. You can help protect against unauthorized access to your account and Personal Data by selecting and protecting your password appropriately and limiting access to your computer and browser by signing off after you have finished accessing your account. Retention of Customer Personal Data processed in connection with Desmos Professional is also governed by the Desmos Professional Terms of Service and the Professional DPA, if executed.
+
+Desmos's security incident notification obligations to Schools with respect to Student Data are set forth in Section 2 above. Desmos's security incident notification obligations to Professional customers with respect to Customer Personal Data are set forth in Section 6 of our Desmos Professional Terms of Service.
+
+<h2 id="keep-information">9. How Long We Keep Your Information</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We keep your Personal Data for as long as necessary to fulfill the purposes outlined in this Privacy Policy unless otherwise required by law.</div>
+
+We will only keep your Personal Data for as long as it is necessary for the purposes set out in this Privacy Policy, unless a longer retention period is required or permitted by law (such as tax, accounting or other legal requirements). No purpose in this policy will require us keeping your Personal Data connected to your account for longer than 90 days past the termination of your account.
+
+When we have no ongoing legitimate business need to process your Personal Data, we will either delete or anonymize it, or, if this is not possible (for example, because your Personal Data has been stored in backup archives), then we will securely store your Personal Data and isolate it from any further processing until deletion is possible.
+
+<h2 id="childrens-privacy">10. Children’s Privacy</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We do not knowingly collect data from or market to children under the applicable age of digital consent, unless (i) a School has collected prior parental / guardian consent or (ii) the applicable parent / guardian has provided consent directly to Desmos.</div>
+
+Our Services are not directed to children under the applicable age of digital consent, with the exceptions of (i) Services for Students of Schools that have collected applicable parental / guardian consent and entered into DPAs with Desmos, (ii) the provision of Services to children with prior parental / guardian consent; and (iii) Desmos Simple Tools (i.e., the web-based versions of the Desmos [Four Function Calculator](/fourfunction), [Desmos Scientific Calculator](/scientific), and [Desmos Matrix Calculator](/matrix)), which do not collect Personal Data.
+
+Desmos Professional is a paid, subscription-based product offered to individuals and organizations for business use, and is not directed to children under the applicable age of digital consent. Customers subscribing to Desmos Professional are responsible for ensuring that all Authorized Users are of legal age to use Desmos Professional in their jurisdiction.
+
+The applicable age of digital consent varies by jurisdiction, but, subject to the limited exceptions above, our Service is not directed (i) to children under 13 in the United States, nor to (ii) children under the age of 16, in the United Kingdom or EEA (or the applicable age of digital consent in the jurisdiction).
+
+If you are a parent / guardian and would like to authorize your child under the applicable age of digital consent to use our Services, please contact [privacy@desmos.com](mailto:privacy@desmos.com).
+
+We do not intend for children under the age of digital consent to use our Services, subject to the three enumerated exceptions above.
+
+If you believe that we have accidentally collected Personal Data from a child under the applicable age of digital consent without either (i) a School’s direction to do so or (ii) the consent of a parent / guardian, then please let us know at [privacy@desmos.com](mailto:privacy@desmos.com) and we will remove that information as soon as possible.
+
+<h2 id="international">11. For Our International and California Users</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We may transfer, store, and process your information in countries other than your own. Users in California may have additional rights.</div>
+
+Our servers are located in the United States. If you are accessing our Services from outside the United States, please be aware that your Personal Data may be transferred to, stored, and processed by us in our facilities and by those third parties with whom we may share your Personal Data (see “Disclosure of Your Information” above), in the United States and other countries.
+
+If you are a resident of the UK or EEA, then these countries may not have data protection or other laws as comprehensive as those in your country. We will however take all necessary measures to protect your Personal Data in accordance with this privacy policy and applicable law.
+
+Such measures include implementing the European Commission's Standard Contractual Clauses for transfers of Personal Data between us and our third-party providers, which require all such recipients to protect Personal Data that they process from the UK or EEA in accordance with European data protection laws.
+
+We offer the School Data Processing Addendum (**“DPA”**) with attached Standard Contractual Clauses (**“SCCs”**) for Schools that operate in the United Kingdom or EEA for purposes of the General Data Protection Regulation (**“GDPR”**) in connection with the use of Desmos’ Services by the School or Students of the School. See below for information on contacting us to request a DPA. You can review our standard, template DPA with attached SCCs [here](https://www.desmos.com/static-assets/privacy-pdfs/Desmos_DPA_and_SCC_2023-03-28_v5.pdf).
+
+We also offer the Professional DPA with attached SCCs for Customers of Desmos Professional that operate in the United Kingdom or EEA. See below for information on contacting us to request a Professional DPA.
+
+If you are a resident of the State of California, this Privacy Policy is supplemented by our California Privacy Rights Statement that explains your California privacy rights and how you can exercise these rights.
+
+If you are a resident in the European Economic Area, the “data controller” of your Personal Data is either Desmos Studio PBC or your School.
+
+**Request a School Data Processing Addendum:** If you represent a school and would like to enter into the DPA (and attached SCCs) with us, please send an email to [privacy-gdpr@desmos.com](mailto:privacy-gdpr@desmos.com), with the following information about the school: (i) name, (ii) address, (iii) telephone number, (iv) signatory name, (v) signatory title, and (vi) signatory email address, and (vii) domain name for staff and student account email address usernames. We will then send the school’s signatory a copy of the DPA for electronic signatures, and arrange for signature by Desmos’ authorized representative.
+
+**Request a Professional Data Processing Addendum:** If you subscribe to Desmos Professional and would like to enter into the Professional DPA (and attached SCCs) with us, please send an email to [privacy-gdpr@desmos.com](mailto:privacy-gdpr@desmos.com) with the following information: (i) entity name, (ii) entity address, (iii) telephone number, (iv) signatory name, (v) signatory title, and (vi) signatory email address. We will then send your signatory a copy of the Professional DPA for electronic signatures, and arrange for signature by Desmos's authorized representative.
+
+**General Data Protection Regulation (GDPR) – European Representative**
+
+Pursuant to Article 27 of the General Data Protection Regulation (GDPR), Desmos Studio PBC has appointed European Data Protection Office (EDPO) as its GDPR Representative in the EU. You can contact EDPO regarding matters pertaining to the GDPR:
+
+- by using EDPO’s online request form: [https://edpo.com/gdpr-data-request/](https://edpo.com/gdpr-data-request/)
+- by writing to EDPO at Avenue Huart Hamoir 71, 1030 Brussels, Belgium
+
+**UK General Data Protection Regulation (GDPR) - UK Representative**
+
+Pursuant to Article 27 of the UK GDPR, Desmos Studio PBC has appointed EDPO UK Ltd as its UK GDPR representative in the UK. You can contact EDPO UK regarding matters pertaining to the UK GDPR:
+
+- by using EDPO’s online request form: [https://edpo.com/uk-gdpr-data-request/](https://edpo.com/uk-gdpr-data-request/)
+- by writing to EDPO UK at Unit 33, Waterside, Schooner Court, 44-48 Wharf Road, London, N1 7UX, United Kingdom
+
+Additionally, as required by GDPR, Desmos has SCCs with our subcontractors who process Personal Data.
+
+<h2 id="contact-us">12. Contact Us</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: Please contact us with any questions.</div>
+
+Please feel free to contact us with any questions or comments about this Privacy Policy, your Personal Data, your consent, or your opt-in or opt-out choices as follows:
+
+<pre>
+Desmos Studio PBC
+ATTN: Privacy Agent
+9450 SW Gemini Dr
+PMB 49136
+Beaverton, Oregon 97008-7105
+USA
+Email: privacy@desmos.com
+</pre>
+
+<h2 id="changes-and-updates">13. Changes and Updates</h2>
+
+<div class="summary-highlight"><strong>Summary</strong>: We will update this policy as necessary, and you can see the history of such changes <a href="https://github.com/desmosinc/policies">here</a>.</div>
+
+a. **Updates**. This Privacy Policy may be revised periodically and this will be reflected in the “date last modified” set forth below. You can track all changes by subscribing to notifications in the [Github repository](https://github.com/desmosinc/policies) which hosts these policies. There you can also see the history of changes. Your continued use of the Desmos Services following such an update constitutes your agreement to the revised Privacy Policy.
+
+b. **Student Data**. Notwithstanding the foregoing, Desmos will not make any material changes to this Privacy Policy that relate to the collection or use of [Student Data](/studentdata) without first giving notice to the school or parent and providing a choice before the Student Data is used in a materially different manner than was disclosed when the information was collected.
+
+c. **Customer Personal Data**. Notwithstanding the foregoing, Desmos will provide advance notice to Desmos Professional customers of any material changes to this Privacy Policy that relate to the collection or use of Customer Personal Data (as defined in Section 3). Such notice will be provided by email or in-product notification to the Owner(s) designated by the Customer, and will take effect no earlier than thirty (30) days after such notice.
+
+d. **Date Last Modified**. This Privacy Policy was last modified on July 15, 2026.

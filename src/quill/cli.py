@@ -1,6 +1,7 @@
 import click
 
 from quill import __version__
+from quill.reader import read_file
 
 
 @click.group()
@@ -13,4 +14,5 @@ def main():
 @click.argument("file", type=click.Path(exists=True))
 def analyze(file):
     """Analyze a legal document."""
-    click.echo(f"Analyzing {file}...")
+    text = read_file(file)
+    click.echo(f"Read {len(text)} characters from {file}")

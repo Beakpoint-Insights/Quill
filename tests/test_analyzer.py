@@ -1,10 +1,10 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import anthropic
 import click
 import pytest
 
-from quill.analyzer import analyze_document, SENIOR_PARTNER_PROMPT
+from quill.analyzer import SENIOR_PARTNER_PROMPT, analyze_document
 
 
 def test_analyze_returns_response_text(monkeypatch, anthropic_response):
@@ -70,10 +70,12 @@ def test_analyze_auth_error(monkeypatch):
     with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
         mock_response = MagicMock()
         mock_response.status_code = 401
-        mock_cls.return_value.messages.create.side_effect = anthropic.AuthenticationError(
-            message="Invalid API key",
-            response=mock_response,
-            body=None,
+        mock_cls.return_value.messages.create.side_effect = (
+            anthropic.AuthenticationError(
+                message="Invalid API key",
+                response=mock_response,
+                body=None,
+            )
         )
 
         with pytest.raises(click.ClickException, match="Invalid ANTHROPIC_API_KEY"):
@@ -100,8 +102,10 @@ def test_analyze_connection_error(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
     with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-        mock_cls.return_value.messages.create.side_effect = anthropic.APIConnectionError(
-            request=MagicMock(),
+        mock_cls.return_value.messages.create.side_effect = (
+            anthropic.APIConnectionError(
+                request=MagicMock(),
+            )
         )
 
         with pytest.raises(click.ClickException, match="Could not connect"):

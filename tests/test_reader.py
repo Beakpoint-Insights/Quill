@@ -27,6 +27,7 @@ def test_read_all_fixtures(fixtures_dir):
 
 def test_read_pdf(tmp_path):
     import pymupdf
+
     pdf_path = tmp_path / "doc.pdf"
     doc = pymupdf.open()
     page = doc.new_page()

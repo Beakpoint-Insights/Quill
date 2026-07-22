@@ -29,10 +29,12 @@ def init_tracing() -> TracerProvider:
     from quill import __version__
 
     service_name = os.environ.get("OTEL_SERVICE_NAME", "quill")
-    resource = Resource.create({
-        "service.name": service_name,
-        "service.version": __version__,
-    })
+    resource = Resource.create(
+        {
+            "service.name": service_name,
+            "service.version": __version__,
+        }
+    )
 
     _provider = TracerProvider(resource=resource)
 

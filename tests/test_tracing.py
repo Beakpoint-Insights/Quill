@@ -60,6 +60,7 @@ def test_anthropic_instrumentation_produces_spans(monkeypatch, anthropic_respons
     )
 
     import anthropic
+
     with patch("httpx.Client.send", return_value=mock_response):
         client = anthropic.Anthropic(api_key="test-key")
         client.messages.create(
@@ -76,8 +77,12 @@ def test_anthropic_instrumentation_produces_spans(monkeypatch, anthropic_respons
     attrs = dict(span.attributes)
     provider_name = attrs.get("gen_ai.system") or attrs.get("gen_ai.provider.name")
     assert provider_name == "anthropic"
-    input_tokens = attrs.get("gen_ai.usage.input_tokens") or attrs.get("gen_ai.response.input_tokens", 0)
-    output_tokens = attrs.get("gen_ai.usage.output_tokens") or attrs.get("gen_ai.response.output_tokens", 0)
+    input_tokens = attrs.get("gen_ai.usage.input_tokens") or attrs.get(
+        "gen_ai.response.input_tokens", 0
+    )
+    output_tokens = attrs.get("gen_ai.usage.output_tokens") or attrs.get(
+        "gen_ai.response.output_tokens", 0
+    )
     assert input_tokens > 0
     assert output_tokens > 0
 

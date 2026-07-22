@@ -49,10 +49,12 @@ Analyze the following legal document and provide your assessment in this structu
 A concise overview of what this document is, its purpose, and the parties involved.
 
 ## Strategic Assessment
-Your professional evaluation of the document's strengths, weaknesses, and overall quality.
+Your professional evaluation of the document's strengths, weaknesses, \
+and overall quality.
 
 ## Key Risks
-Specific risks, liabilities, or concerns that a client should be aware of before signing.
+Specific risks, liabilities, or concerns that a client should be aware \
+of before signing.
 
 ## Negotiation Recommendations
 Concrete suggestions for terms to negotiate, modify, or add before execution.\
@@ -103,13 +105,20 @@ def analyze_document(text: str) -> AnalysisResult:
                     messages=messages,
                 )
             except anthropic.AuthenticationError:
-                raise click.ClickException("Invalid ANTHROPIC_API_KEY. Check your API key and try again.")
+                raise click.ClickException(
+                    "Invalid ANTHROPIC_API_KEY. Check your API key and try again."
+                ) from None
             except anthropic.RateLimitError:
-                raise click.ClickException("Rate limited by the Anthropic API. Please wait and try again.")
+                raise click.ClickException(
+                    "Rate limited by the Anthropic API. Please wait and try again."
+                ) from None
             except anthropic.APIConnectionError:
-                raise click.ClickException("Could not connect to the Anthropic API. Check your network connection.")
+                raise click.ClickException(
+                    "Could not connect to the Anthropic API. "
+                    "Check your network connection."
+                ) from None
             except anthropic.APIError as e:
-                raise click.ClickException(f"Anthropic API error: {e}")
+                raise click.ClickException(f"Anthropic API error: {e}") from None
 
             try:
                 cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
@@ -128,7 +137,11 @@ def analyze_document(text: str) -> AnalysisResult:
 
         analysis_text = content_block.text
         if truncated:
-            analysis_text += "\n\n---\n*Note: This analysis was truncated due to length constraints.*"
+            analysis_text += (
+                "\n\n---\n"
+                "*Note: This analysis was truncated "
+                "due to length constraints.*"
+            )
 
         return AnalysisResult(
             text=analysis_text,

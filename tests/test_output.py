@@ -23,6 +23,7 @@ def _capture_output(result: AnalysisResult) -> str:
     console = Console(file=buf, force_terminal=False, width=80)
 
     from unittest.mock import patch
+
     with patch("quill.output.Console", return_value=console):
         display_analysis(result)
 
@@ -57,6 +58,7 @@ def test_output_non_tty():
     console = Console(file=buf, force_terminal=False, no_color=True, width=80)
 
     from unittest.mock import patch
+
     with patch("quill.output.Console", return_value=console):
         display_analysis(_make_result())
 

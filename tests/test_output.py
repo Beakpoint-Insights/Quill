@@ -10,7 +10,7 @@ def _make_result(**overrides) -> AnalysisResult:
     defaults = dict(
         text="## Executive Summary\nThis is an NDA.",
         role="Senior Partner",
-        model="claude-opus-4-20250514",
+        model="claude-sonnet-5",
         input_tokens=1200,
         output_tokens=85,
     )

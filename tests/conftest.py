@@ -4,6 +4,8 @@ from unittest.mock import patch
 import pytest
 from anthropic.types import Message, TextBlock, Usage
 
+from quill.cache import ResponseCache
+
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -29,6 +31,14 @@ def anthropic_response():
         stop_reason="end_turn",
         usage=Usage(input_tokens=1200, output_tokens=85),
     )
+
+
+@pytest.fixture(autouse=True)
+def _no_cache(tmp_path: Path) -> ResponseCache:
+    """Point the response cache at a throwaway directory for all tests."""
+    empty_cache = ResponseCache(cache_dir=tmp_path / "cache")
+    with patch("quill.analyzer.ResponseCache", return_value=empty_cache):
+        yield empty_cache
 
 
 @pytest.fixture

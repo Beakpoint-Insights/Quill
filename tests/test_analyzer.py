@@ -29,7 +29,7 @@ def test_analyze_calls_claude_opus(monkeypatch, anthropic_response):
         analyze_document("Some legal text")
 
         call_kwargs = mock_cls.return_value.messages.create.call_args.kwargs
-        assert call_kwargs["model"] == "claude-opus-4"
+        assert call_kwargs["model"] == "claude-sonnet-5"
 
 
 def test_analyze_uses_senior_partner_prompt(monkeypatch, anthropic_response):

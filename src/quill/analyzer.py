@@ -2,7 +2,10 @@ import os
 from dataclasses import dataclass
 
 import anthropic
+from anthropic.types import MessageParam, TextBlock
 import click
+
+from quill.cache import ResponseCache
 
 
 @dataclass
@@ -40,25 +43,38 @@ def analyze_document(text: str) -> AnalysisResult:
             "Get your key at https://console.anthropic.com/"
         )
 
-    try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-opus-4",
-            max_tokens=4096,
-            system=SENIOR_PARTNER_PROMPT,
-            messages=[{"role": "user", "content": text}],
-        )
-    except anthropic.AuthenticationError:
-        raise click.ClickException("Invalid ANTHROPIC_API_KEY. Check your API key and try again.")
-    except anthropic.RateLimitError:
-        raise click.ClickException("Rate limited by the Anthropic API. Please wait and try again.")
-    except anthropic.APIConnectionError:
-        raise click.ClickException("Could not connect to the Anthropic API. Check your network connection.")
-    except anthropic.APIError as e:
-        raise click.ClickException(f"Anthropic API error: {e}")
+    model = "claude-sonnet-5"
+    cache = ResponseCache()
+
+    response = cache.get(model, SENIOR_PARTNER_PROMPT, text)
+    if response is None:
+        try:
+            client = anthropic.Anthropic(api_key=api_key)
+            messages: list[MessageParam] = [{"role": "user", "content": text}]
+            response = client.messages.create(
+                model=model,
+                max_tokens=4096,
+                system=SENIOR_PARTNER_PROMPT,
+                messages=messages,
+            )
+        except anthropic.AuthenticationError:
+            raise click.ClickException("Invalid ANTHROPIC_API_KEY. Check your API key and try again.")
+        except anthropic.RateLimitError:
+            raise click.ClickException("Rate limited by the Anthropic API. Please wait and try again.")
+        except anthropic.APIConnectionError:
+            raise click.ClickException("Could not connect to the Anthropic API. Check your network connection.")
+        except anthropic.APIError as e:
+            raise click.ClickException(f"Anthropic API error: {e}")
+        cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
+
+    content_block = next(
+        (b for b in response.content if isinstance(b, TextBlock)), None
+    )
+    if content_block is None:
+        raise click.ClickException("Unexpected response format from Anthropic API.")
 
     return AnalysisResult(
-        text=response.content[0].text,
+        text=content_block.text,
         role="Senior Partner",
         model=response.model,
         input_tokens=response.usage.input_tokens,

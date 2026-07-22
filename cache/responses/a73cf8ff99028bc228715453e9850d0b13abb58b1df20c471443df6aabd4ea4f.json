@@ -1,0 +1,28 @@
+{
+  "id": "msg_test_0001",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "This document is a mutual non-disclosure agreement.",
+      "type": "text"
+    }
+  ],
+  "model": "claude-sonnet-4-20250514",
+  "role": "assistant",
+  "stop_details": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": null,
+    "cache_read_input_tokens": null,
+    "inference_geo": null,
+    "input_tokens": 1200,
+    "output_tokens": 85,
+    "output_tokens_details": null,
+    "server_tool_use": null,
+    "service_tier": null
+  }
+}

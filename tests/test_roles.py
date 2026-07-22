@@ -41,22 +41,45 @@ class TestRoleDefinitions:
         with pytest.raises(AttributeError):
             LAW_CLERK.name = "changed"  # type: ignore[misc]
 
+    def test_all_roles_have_valid_provider(self) -> None:
+        for role in ALL_ROLES:
+            assert role.provider in ("anthropic", "openai"), (
+                f"{role.name} has invalid provider: {role.provider}"
+            )
+
 
 class TestModelAssignments:
-    def test_law_clerk_uses_haiku(self) -> None:
+    def test_law_clerk_uses_anthropic_haiku(self) -> None:
+        assert LAW_CLERK.provider == "anthropic"
         assert LAW_CLERK.model == "claude-haiku-4-5"
 
-    def test_research_assistant_uses_haiku(self) -> None:
-        assert RESEARCH_ASSISTANT.model == "claude-haiku-4-5"
+    def test_research_assistant_uses_openai_mini(self) -> None:
+        assert RESEARCH_ASSISTANT.provider == "openai"
+        assert RESEARCH_ASSISTANT.model == "gpt-4.1-mini"
 
-    def test_paralegal_uses_sonnet(self) -> None:
-        assert PARALEGAL.model == "claude-sonnet-4-6"
+    def test_paralegal_uses_openai(self) -> None:
+        assert PARALEGAL.provider == "openai"
+        assert PARALEGAL.model == "gpt-4.1"
 
-    def test_junior_associate_uses_sonnet(self) -> None:
+    def test_junior_associate_uses_anthropic_sonnet(self) -> None:
+        assert JUNIOR_ASSOCIATE.provider == "anthropic"
         assert JUNIOR_ASSOCIATE.model == "claude-sonnet-4-6"
 
-    def test_senior_partner_uses_opus_tier(self) -> None:
+    def test_senior_partner_uses_anthropic_top_tier(self) -> None:
+        assert SENIOR_PARTNER.provider == "anthropic"
         assert SENIOR_PARTNER.model == "claude-sonnet-5"
+
+
+class TestProviderDistribution:
+    def test_three_anthropic_two_openai(self) -> None:
+        anthropic_roles = [r for r in ALL_ROLES if r.provider == "anthropic"]
+        openai_roles = [r for r in ALL_ROLES if r.provider == "openai"]
+        assert len(anthropic_roles) == 3
+        assert len(openai_roles) == 2
+
+    def test_openai_roles_are_research_assistant_and_paralegal(self) -> None:
+        openai_names = {r.name for r in ALL_ROLES if r.provider == "openai"}
+        assert openai_names == {"Research Assistant", "Paralegal"}
 
 
 class TestRolePromptContent:
@@ -110,6 +133,7 @@ class TestRoleDataclass:
     def test_role_equality(self) -> None:
         clone = Role(
             name=LAW_CLERK.name,
+            provider=LAW_CLERK.provider,
             model=LAW_CLERK.model,
             system_prompt=LAW_CLERK.system_prompt,
         )

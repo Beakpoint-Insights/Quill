@@ -16,21 +16,24 @@ __all__ = [
 
 @dataclass(frozen=True)
 class Role:
-    """A legal analysis role with its model assignment and system prompt.
+    """A legal analysis role with its provider, model, and system prompt.
 
     Attributes:
         name: Display name for the role.
-        model: Claude model identifier to use for this role.
+        provider: LLM provider identifier (``"anthropic"`` or ``"openai"``).
+        model: Model identifier to use for this role.
         system_prompt: System prompt instructing the model how to behave.
     """
 
     name: str
+    provider: str
     model: str
     system_prompt: str
 
 
 LAW_CLERK = Role(
     name="Law Clerk",
+    provider="anthropic",
     model="claude-haiku-4-5",
     system_prompt=(
         "You are a Law Clerk responsible for initial document processing. "
@@ -49,7 +52,8 @@ LAW_CLERK = Role(
 
 RESEARCH_ASSISTANT = Role(
     name="Research Assistant",
-    model="claude-haiku-4-5",
+    provider="openai",
+    model="gpt-4.1-mini",
     system_prompt=(
         "You are a Research Assistant specializing in legal research. "
         "Analyze the following legal document and provide:\n\n"
@@ -67,7 +71,8 @@ RESEARCH_ASSISTANT = Role(
 
 PARALEGAL = Role(
     name="Paralegal",
-    model="claude-sonnet-4-6",
+    provider="openai",
+    model="gpt-4.1",
     system_prompt=(
         "You are a Paralegal with expertise in contract analysis. "
         "Analyze the following legal document and provide:\n\n"
@@ -89,6 +94,7 @@ PARALEGAL = Role(
 
 JUNIOR_ASSOCIATE = Role(
     name="Junior Associate",
+    provider="anthropic",
     model="claude-sonnet-4-6",
     system_prompt=(
         "You are a Junior Associate at a law firm conducting a review "
@@ -108,6 +114,7 @@ JUNIOR_ASSOCIATE = Role(
 
 SENIOR_PARTNER = Role(
     name="Senior Partner",
+    provider="anthropic",
     model="claude-sonnet-5",
     system_prompt=(
         "You are a Senior Partner at a top-tier law firm with 30 years "

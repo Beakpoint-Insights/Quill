@@ -1,10 +1,16 @@
 """Local response cache to avoid redundant API calls during development."""
 
+from __future__ import annotations
+
 import hashlib
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from anthropic.types import Message
+import orjson
+
+if TYPE_CHECKING:
+    from quill.analyzer import AnalysisResult
 
 __all__ = ["ResponseCache"]
 
@@ -14,7 +20,7 @@ CACHE_DIR = Path.home() / ".cache" / "quill" / "responses"
 
 
 class ResponseCache:
-    """Caches raw Anthropic API responses keyed by a hash of the inputs.
+    """Caches analysis results keyed by a hash of the inputs.
 
     Args:
         cache_dir: Directory for cached response files.
@@ -37,8 +43,8 @@ class ResponseCache:
         payload = f"{model}\n{system}\n{text}"
         return hashlib.sha256(payload.encode()).hexdigest()
 
-    def get(self, model: str, system: str, text: str) -> Message | None:
-        """Return a cached Message if one exists, otherwise None.
+    def get(self, model: str, system: str, text: str) -> AnalysisResult | None:
+        """Return a cached AnalysisResult if one exists, otherwise None.
 
         Args:
             model: Model identifier string.
@@ -46,29 +52,36 @@ class ResponseCache:
             text: User input text.
 
         Returns:
-            Cached Message or None on miss / corrupt data.
+            Cached AnalysisResult or None on miss / corrupt data.
         """
+        from quill.analyzer import AnalysisResult
+
         path = self._dir / f"{self._key(model, system, text)}.json"
         if not path.exists():
             return None
         try:
-            msg = Message.model_validate_json(path.read_bytes())
+            data = orjson.loads(path.read_bytes())
+            result = AnalysisResult(**data)
         except Exception:
             logger.warning("Corrupt cache entry %s, treating as miss", path.name)
             return None
+        result.cache_hit = True
         logger.debug("Cache hit: %s", path.name)
-        return msg
+        return result
 
-    def put(self, model: str, system: str, text: str, response: Message) -> None:
-        """Store a raw API response in the cache.
+    def put(self, model: str, system: str, text: str, result: AnalysisResult) -> None:
+        """Store an analysis result in the cache.
 
         Args:
             model: Model identifier string.
             system: System prompt text.
             text: User input text.
-            response: The Anthropic Message to cache.
+            result: The AnalysisResult to cache.
         """
+        from dataclasses import asdict
+
         self._dir.mkdir(parents=True, exist_ok=True)
         path = self._dir / f"{self._key(model, system, text)}.json"
-        path.write_text(response.model_dump_json(indent=2), encoding="utf-8")
+        data = asdict(result)
+        path.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2))
         logger.debug("Cached response: %s", path.name)

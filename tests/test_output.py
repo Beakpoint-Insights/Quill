@@ -14,6 +14,7 @@ def _make_result(**overrides) -> AnalysisResult:
     defaults = dict(
         text="## Executive Summary\nThis is an NDA.",
         role="Senior Partner",
+        provider="anthropic",
         model="claude-sonnet-5",
         input_tokens=1200,
         output_tokens=85,
@@ -24,7 +25,7 @@ def _make_result(**overrides) -> AnalysisResult:
 
 def _capture_output(result: AnalysisResult) -> str:
     buf = StringIO()
-    console = Console(file=buf, force_terminal=False, width=80)
+    console = Console(file=buf, force_terminal=False, width=120)
 
     with patch("quill.output.Console", return_value=console):
         display_analysis(result)
@@ -34,7 +35,7 @@ def _capture_output(result: AnalysisResult) -> str:
 
 def _capture_multi_output(results: list[AnalysisResult]) -> str:
     buf = StringIO()
-    console = Console(file=buf, force_terminal=False, width=100)
+    console = Console(file=buf, force_terminal=False, width=120)
 
     with patch("quill.output.Console", return_value=console):
         display_multi_analysis(results)
@@ -68,6 +69,11 @@ def test_output_shows_model():
     assert "claude-opus-4-20250514" in output
 
 
+def test_output_shows_provider():
+    output = _capture_output(_make_result(provider="anthropic"))
+    assert "Anthropic" in output
+
+
 def test_output_non_tty():
     buf = StringIO()
     console = Console(file=buf, force_terminal=False, no_color=True, width=80)
@@ -80,13 +86,14 @@ def test_output_non_tty():
     assert len(output) > 0
 
 
-# --- Multi-result display (QUIL-18) ---
+# --- Multi-result display (QUIL-18 / QUIL-22) ---
 
 
 def _make_five_results() -> list[AnalysisResult]:
     return [
         _make_result(
             role=role.name,
+            provider=role.provider,
             model=role.model,
             text=f"## Analysis\nAnalysis from {role.name}.",
             input_tokens=(i + 1) * 100,
@@ -131,6 +138,13 @@ class TestMultiAnalysisDisplay:
         for role in ALL_ROLES:
             assert role.name in output
 
+    def test_summary_table_shows_provider_column(self) -> None:
+        results = _make_five_results()
+        output = _capture_multi_output(results)
+
+        assert "Anthropic" in output
+        assert "Openai" in output
+
     def test_summary_table_shows_token_counts(self) -> None:
         results = _make_five_results()
         output = _capture_multi_output(results)
@@ -157,34 +171,36 @@ class TestMultiAnalysisDisplay:
         results = _make_five_results()
         results[2] = _make_result(
             role="Paralegal",
-            model="claude-sonnet-4",
+            provider="openai",
+            model="gpt-4.1",
             text="",
             input_tokens=0,
             output_tokens=0,
-            error="Rate limited by the Anthropic API.",
+            error="Rate limited by the OpenAI API.",
         )
         output = _capture_multi_output(results)
 
         assert "Rate limited" in output
         assert "failed" in output
 
-    def test_renders_at_80_columns(self) -> None:
+    def test_renders_at_120_columns(self) -> None:
         buf = StringIO()
-        console = Console(file=buf, force_terminal=False, width=80)
+        console = Console(file=buf, force_terminal=False, width=120)
 
         with patch("quill.output.Console", return_value=console):
             display_multi_analysis(_make_five_results())
 
         output = buf.getvalue()
         lines = output.split("\n")
-        long_lines = [line for line in lines if len(line) > 80]
-        assert not long_lines, f"Lines exceed 80 columns: {long_lines[:3]}"
+        long_lines = [line for line in lines if len(line) > 120]
+        assert not long_lines, f"Lines exceed 120 columns: {long_lines[:3]}"
 
     def test_cached_result_shows_cached_label(self) -> None:
         results = _make_five_results()
         results[0] = _make_result(
             role="Law Clerk",
-            model="claude-haiku-3-5",
+            provider="anthropic",
+            model="claude-haiku-4-5",
             text="## Analysis\nCached analysis.",
             input_tokens=0,
             output_tokens=0,
@@ -196,7 +212,7 @@ class TestMultiAnalysisDisplay:
 
     def test_non_tty_output_has_no_escape_codes(self) -> None:
         buf = StringIO()
-        console = Console(file=buf, force_terminal=False, no_color=True, width=100)
+        console = Console(file=buf, force_terminal=False, no_color=True, width=120)
 
         with patch("quill.output.Console", return_value=console):
             display_multi_analysis(_make_five_results())

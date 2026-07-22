@@ -59,8 +59,9 @@ class TestAnalyzeAllRoles:
             analyze_document_all_roles("contract text")
 
             calls = mock_cls.return_value.messages.create.call_args_list
-            for call, role in zip(calls, ALL_ROLES, strict=True):
-                assert call.kwargs["model"] == role.model
+            called_models = {c.kwargs["model"] for c in calls}
+            expected_models = {r.model for r in ALL_ROLES}
+            assert called_models == expected_models
 
     def test_each_role_uses_its_system_prompt(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
@@ -72,8 +73,9 @@ class TestAnalyzeAllRoles:
             analyze_document_all_roles("contract text")
 
             calls = mock_cls.return_value.messages.create.call_args_list
-            for call, role in zip(calls, ALL_ROLES, strict=True):
-                assert call.kwargs["system"] == role.system_prompt
+            called_prompts = {c.kwargs["system"] for c in calls}
+            expected_prompts = {r.system_prompt for r in ALL_ROLES}
+            assert called_prompts == expected_prompts
 
     def test_missing_api_key_raises(self, monkeypatch) -> None:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)

@@ -10,6 +10,7 @@ from anthropic.types import MessageParam, TextBlock
 from opentelemetry import trace
 
 from quill.cache import ResponseCache
+from quill.roles import SENIOR_PARTNER, Role
 
 __all__ = ["AnalysisResult", "analyze_document"]
 
@@ -30,6 +31,7 @@ class AnalysisResult:
         output_tokens: Output tokens consumed (zero on cache hit).
         cache_hit: Whether the result was served from cache.
         truncated: Whether the API response was truncated.
+        error: Error message if the analysis failed, None on success.
     """
 
     text: str
@@ -39,33 +41,21 @@ class AnalysisResult:
     output_tokens: int
     cache_hit: bool = False
     truncated: bool = False
+    error: str | None = None
 
 
-SENIOR_PARTNER_PROMPT = """\
-You are a Senior Partner at a top-tier law firm with 30 years of experience. \
-Analyze the following legal document and provide your assessment in this structure:
-
-## Executive Summary
-A concise overview of what this document is, its purpose, and the parties involved.
-
-## Strategic Assessment
-Your professional evaluation of the document's strengths, weaknesses, \
-and overall quality.
-
-## Key Risks
-Specific risks, liabilities, or concerns that a client should be aware \
-of before signing.
-
-## Negotiation Recommendations
-Concrete suggestions for terms to negotiate, modify, or add before execution.\
-"""
-
-
-def analyze_document(text: str) -> AnalysisResult:
+def analyze_document(
+    text: str,
+    role: Role = SENIOR_PARTNER,
+    *,
+    api_key: str | None = None,
+) -> AnalysisResult:
     """Analyze a legal document using the Anthropic API.
 
     Args:
         text: The document text to analyze.
+        role: The role to use for analysis.
+        api_key: Anthropic API key. Falls back to ANTHROPIC_API_KEY env var.
 
     Returns:
         An AnalysisResult with the model's assessment.
@@ -73,35 +63,35 @@ def analyze_document(text: str) -> AnalysisResult:
     Raises:
         click.ClickException: On missing API key or API errors.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
+    resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    if not resolved_key:
         raise click.ClickException(
             "ANTHROPIC_API_KEY environment variable is not set. "
             "Get your key at https://console.anthropic.com/"
         )
 
-    model = "claude-sonnet-5"
-    role = "Senior Partner"
     cache = ResponseCache()
 
     with tracer.start_as_current_span(
         "quill.analyze",
         attributes={
             "code.function.name": "quill.analyzer.analyze_document",
+            "quill.role": role.name,
+            "quill.model": role.model,
         },
     ) as span:
-        response = cache.get(model, SENIOR_PARTNER_PROMPT, text)
+        response = cache.get(role.model, role.system_prompt, text)
         cache_hit = response is not None
         span.set_attribute("quill.cache.hit", cache_hit)
 
         if response is None:
             try:
-                client = anthropic.Anthropic(api_key=api_key)
+                client = anthropic.Anthropic(api_key=resolved_key)
                 messages: list[MessageParam] = [{"role": "user", "content": text}]
                 response = client.messages.create(
-                    model=model,
+                    model=role.model,
                     max_tokens=4096,
-                    system=SENIOR_PARTNER_PROMPT,
+                    system=role.system_prompt,
                     messages=messages,
                 )
             except anthropic.AuthenticationError:
@@ -121,7 +111,7 @@ def analyze_document(text: str) -> AnalysisResult:
                 raise click.ClickException(f"Anthropic API error: {e}") from None
 
             try:
-                cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
+                cache.put(role.model, role.system_prompt, text, response)
             except OSError:
                 logger.warning("Failed to write cache, continuing with result")
 
@@ -133,7 +123,9 @@ def analyze_document(text: str) -> AnalysisResult:
             (b for b in response.content if isinstance(b, TextBlock)), None
         )
         if content_block is None:
-            raise click.ClickException("Unexpected response format from Anthropic API.")
+            raise click.ClickException(
+                "Unexpected response format from Anthropic API."
+            )
 
         analysis_text = content_block.text
         if truncated:
@@ -145,7 +137,7 @@ def analyze_document(text: str) -> AnalysisResult:
 
         return AnalysisResult(
             text=analysis_text,
-            role=role,
+            role=role.name,
             model=response.model,
             input_tokens=response.usage.input_tokens if not cache_hit else 0,
             output_tokens=response.usage.output_tokens if not cache_hit else 0,

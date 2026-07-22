@@ -14,6 +14,7 @@ from opentelemetry import trace
 from quill.cache import ResponseCache
 from quill.progress import RoleStatus
 from quill.roles import ALL_ROLES, SENIOR_PARTNER, Role
+from quill.tracing import get_department
 
 __all__ = ["AnalysisResult", "analyze_document", "analyze_document_all_roles"]
 
@@ -89,22 +90,27 @@ def analyze_document(
     Raises:
         click.ClickException: On missing API key or API errors.
     """
-    resolved_key = _require_api_key(api_key)
     cache = ResponseCache()
+
+    span_attrs: dict[str, str | bool | int] = {
+        "code.function.name": "quill.analyzer.analyze_document",
+        "quill.role": role.name,
+        "quill.model": role.model,
+    }
+    dept = get_department()
+    if dept is not None:
+        span_attrs["app.user.org.id"] = dept
 
     with tracer.start_as_current_span(
         "quill.analyze",
-        attributes={
-            "code.function.name": "quill.analyzer.analyze_document",
-            "quill.role": role.name,
-            "quill.model": role.model,
-        },
+        attributes=span_attrs,
     ) as span:
         response = cache.get(role.model, role.system_prompt, text)
         cache_hit = response is not None
         span.set_attribute("quill.cache.hit", cache_hit)
 
         if response is None:
+            resolved_key = _require_api_key(api_key)
             try:
                 client = anthropic.Anthropic(api_key=resolved_key)
                 messages: list[MessageParam] = [{"role": "user", "content": text}]
@@ -167,7 +173,7 @@ def analyze_document(
 async def _analyze_role(
     text: str,
     role: Role,
-    api_key: str,
+    api_key: str | None,
     on_progress: ProgressCallback | None = None,
 ) -> AnalysisResult:
     """Run a single role's analysis in a thread, returning an error result on failure.
@@ -175,7 +181,7 @@ async def _analyze_role(
     Args:
         text: The document text to analyze.
         role: The role to execute.
-        api_key: Anthropic API key.
+        api_key: Anthropic API key, or None to read from env.
         on_progress: Optional callback for status updates.
 
     Returns:
@@ -210,7 +216,7 @@ async def _analyze_role(
 async def _analyze_all_roles_async(
     text: str,
     roles: tuple[Role, ...],
-    api_key: str,
+    api_key: str | None,
     on_progress: ProgressCallback | None = None,
 ) -> list[AnalysisResult]:
     """Fan out all roles concurrently and collect results.
@@ -218,7 +224,7 @@ async def _analyze_all_roles_async(
     Args:
         text: The document text to analyze.
         roles: The roles to execute.
-        api_key: Anthropic API key.
+        api_key: Anthropic API key, or None to read from env.
         on_progress: Optional callback for status updates.
 
     Returns:
@@ -245,19 +251,18 @@ def analyze_document_all_roles(
 
     Returns:
         A list of AnalysisResults, one per role, in role order.
-
-    Raises:
-        click.ClickException: On missing API key.
+        Individual results carry an error if the API key is missing.
     """
-    resolved_key = _require_api_key(api_key)
+    all_span_attrs: dict[str, str | int] = {
+        "code.function.name": "quill.analyzer.analyze_document_all_roles",
+        "quill.roles.count": len(roles),
+    }
+    dept = get_department()
+    if dept is not None:
+        all_span_attrs["app.user.org.id"] = dept
 
     with tracer.start_as_current_span(
         "quill.analyze_all",
-        attributes={
-            "code.function.name": "quill.analyzer.analyze_document_all_roles",
-            "quill.roles.count": len(roles),
-        },
+        attributes=all_span_attrs,
     ):
-        return asyncio.run(
-            _analyze_all_roles_async(text, roles, resolved_key, on_progress)
-        )
+        return asyncio.run(_analyze_all_roles_async(text, roles, api_key, on_progress))

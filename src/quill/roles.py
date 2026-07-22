@@ -31,7 +31,7 @@ class Role:
 
 LAW_CLERK = Role(
     name="Law Clerk",
-    model="claude-haiku-4-5-20251001",
+    model="claude-haiku-4-5",
     system_prompt=(
         "You are a Law Clerk responsible for initial document processing. "
         "Analyze the following legal document and provide:\n\n"
@@ -49,7 +49,7 @@ LAW_CLERK = Role(
 
 RESEARCH_ASSISTANT = Role(
     name="Research Assistant",
-    model="claude-haiku-4-5-20251001",
+    model="claude-haiku-4-5",
     system_prompt=(
         "You are a Research Assistant specializing in legal research. "
         "Analyze the following legal document and provide:\n\n"

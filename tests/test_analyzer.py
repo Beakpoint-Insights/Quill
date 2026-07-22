@@ -54,7 +54,7 @@ def test_analyze_with_different_role(monkeypatch, anthropic_response):
         result = analyze_document("Some legal text", role=LAW_CLERK)
 
         call_kwargs = mock_cls.return_value.messages.create.call_args.kwargs
-        assert call_kwargs["model"] == "claude-haiku-4-5-20251001"
+        assert call_kwargs["model"] == "claude-haiku-4-5"
         assert call_kwargs["system"] == LAW_CLERK.system_prompt
         assert result.role == "Law Clerk"
 
@@ -171,4 +171,4 @@ def test_analyze_sets_otel_attributes(monkeypatch, anthropic_response):
         call_kwargs = mock_tracer.start_as_current_span.call_args
         attrs = call_kwargs.kwargs.get("attributes", {})
         assert attrs["quill.role"] == "Law Clerk"
-        assert attrs["quill.model"] == "claude-haiku-4-5-20251001"
+        assert attrs["quill.model"] == "claude-haiku-4-5"

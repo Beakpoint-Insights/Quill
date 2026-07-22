@@ -4,8 +4,6 @@ import time
 from unittest.mock import MagicMock, patch
 
 import anthropic
-import click
-import pytest
 from anthropic.types import Message, TextBlock, Usage
 
 from quill.analyzer import analyze_document_all_roles
@@ -77,11 +75,12 @@ class TestAnalyzeAllRoles:
             expected_prompts = {r.system_prompt for r in ALL_ROLES}
             assert called_prompts == expected_prompts
 
-    def test_missing_api_key_raises(self, monkeypatch) -> None:
+    def test_missing_api_key_errors_per_role(self, monkeypatch) -> None:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
-        with pytest.raises(click.ClickException, match="ANTHROPIC_API_KEY"):
-            analyze_document_all_roles("some text")
+        results = analyze_document_all_roles("some text")
+        assert all(r.error is not None for r in results)
+        assert all("ANTHROPIC_API_KEY" in r.error for r in results)
 
     def test_accepts_explicit_api_key(self) -> None:
         with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:

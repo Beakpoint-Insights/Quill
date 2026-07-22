@@ -44,10 +44,10 @@ class TestRoleDefinitions:
 
 class TestModelAssignments:
     def test_law_clerk_uses_haiku(self) -> None:
-        assert LAW_CLERK.model == "claude-haiku-4-5-20251001"
+        assert LAW_CLERK.model == "claude-haiku-4-5"
 
     def test_research_assistant_uses_haiku(self) -> None:
-        assert RESEARCH_ASSISTANT.model == "claude-haiku-4-5-20251001"
+        assert RESEARCH_ASSISTANT.model == "claude-haiku-4-5"
 
     def test_paralegal_uses_sonnet(self) -> None:
         assert PARALEGAL.model == "claude-sonnet-4-6"

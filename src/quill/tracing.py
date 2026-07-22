@@ -9,32 +9,54 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-__all__ = ["init_tracing", "shutdown_tracing"]
+__all__ = ["get_department", "init_tracing", "shutdown_tracing"]
 
 _provider: TracerProvider | None = None
+_department: str | None = None
 
 
-def init_tracing() -> TracerProvider:
+def get_department() -> str | None:
+    """Return the department set during initialization.
+
+    Returns:
+        The department string, or None if not set.
+    """
+    return _department
+
+
+def init_tracing(
+    *,
+    project: str | None = None,
+    department: str | None = None,
+) -> TracerProvider:
     """Initialize OpenTelemetry tracing.
 
     Idempotent: returns the existing provider if already initialized.
 
+    Args:
+        project: Project or matter name set as ``service.name``.
+        department: Department name stored for ``app.user.org.id``
+            span-level attribution.
+
     Returns:
         The active TracerProvider.
     """
-    global _provider
+    global _provider, _department
     if _provider is not None:
         return _provider
 
+    _department = department
+
     from quill import __version__
 
-    service_name = os.environ.get("OTEL_SERVICE_NAME", "quill")
-    resource = Resource.create(
-        {
-            "service.name": service_name,
-            "service.version": __version__,
-        }
-    )
+    service_name = project or os.environ.get("OTEL_SERVICE_NAME", "quill")
+    attributes: dict[str, str] = {
+        "service.name": service_name,
+        "service.namespace": "quill",
+        "service.version": __version__,
+        "gen_ai.system": "anthropic",
+    }
+    resource = Resource.create(attributes)
 
     _provider = TracerProvider(resource=resource)
 
@@ -54,7 +76,8 @@ def init_tracing() -> TracerProvider:
 
 def shutdown_tracing() -> None:
     """Shut down the tracer provider and flush pending spans."""
-    global _provider
+    global _provider, _department
     if _provider is not None:
         _provider.shutdown()
         _provider = None
+    _department = None

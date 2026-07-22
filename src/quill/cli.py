@@ -29,7 +29,6 @@ def main(verbose: bool) -> None:
     load_dotenv()
     if verbose:
         logging.basicConfig(level=logging.DEBUG, format="%(name)s: %(message)s")
-    init_tracing()
     if not _atexit_registered:
         atexit.register(shutdown_tracing)
         _atexit_registered = True
@@ -43,8 +42,24 @@ def main(verbose: bool) -> None:
     default=False,
     help="Run only the Senior Partner role instead of all five.",
 )
-def analyze(file: str, single_role: bool) -> None:
+@click.option(
+    "--project",
+    required=True,
+    help="Project or matter name for cost attribution (e.g. 'Acme-Acquisition').",
+)
+@click.option(
+    "--department",
+    required=True,
+    help="Department name for cost attribution (e.g. 'M&A').",
+)
+def analyze(
+    file: str,
+    single_role: bool,
+    project: str,
+    department: str,
+) -> None:
     """Analyze a legal document."""
+    init_tracing(project=project, department=department)
     text = read_file(file)
     console = Console()
 

@@ -1,9 +1,13 @@
 """Tests for parallel multi-role analysis (QUIL-19)."""
 
+import os
+import subprocess
+import sys
 import time
 from unittest.mock import MagicMock, patch
 
 import anthropic
+import pytest
 from anthropic.types import Message, TextBlock, Usage
 
 from quill.analyzer import analyze_document_all_roles
@@ -205,6 +209,80 @@ class TestOtelSpans:
             span_calls = mock_tracer.start_as_current_span.call_args_list
             span_names = [c.args[0] for c in span_calls]
             assert "quill.analyze_all" in span_names
+
+
+class TestTraceContinuity:
+    """All role spans share the same trace as the parent quill.analyze_all span."""
+
+    def test_all_roles_share_single_trace(self) -> None:
+        env = {
+            k: v for k, v in os.environ.items() if not k.startswith("OTEL_EXPORTER")
+        }
+        script = """
+from unittest.mock import patch
+from anthropic.types import Message, TextBlock, Usage
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
+from quill.tracing import init_tracing
+from quill.cache import ResponseCache
+from quill.roles import ALL_ROLES
+import tempfile, pathlib
+
+provider = init_tracing(project="Trace-Test", department="QA")
+exporter = InMemorySpanExporter()
+provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+def make_response(name):
+    return Message(
+        id=f"msg_{name}", type="message", role="assistant",
+        content=[TextBlock(type="text", text=f"Analysis from {name}.")],
+        model="claude-sonnet-4-20250514",
+        stop_reason="end_turn",
+        usage=Usage(input_tokens=100, output_tokens=50),
+    )
+
+tmp = tempfile.mkdtemp()
+cache = ResponseCache(cache_dir=pathlib.Path(tmp) / "cache")
+
+with patch("anthropic.Anthropic") as mock_cls, \\
+     patch("quill.analyzer.ResponseCache", return_value=cache):
+    mock_cls.return_value.messages.create.side_effect = [
+        make_response(r.name) for r in ALL_ROLES
+    ]
+    from quill.analyzer import analyze_document_all_roles
+    analyze_document_all_roles("Test document.", api_key="test-key")
+
+provider.force_flush()
+spans = exporter.get_finished_spans()
+
+trace_ids = {s.context.trace_id for s in spans}
+assert len(trace_ids) == 1, (
+    f"Expected 1 trace, got {len(trace_ids)}: spans={[s.name for s in spans]}"
+)
+
+parent_spans = [s for s in spans if s.name == "quill.analyze_all"]
+assert len(parent_spans) == 1
+
+child_spans = [s for s in spans if s.name == "quill.analyze"]
+assert len(child_spans) == len(ALL_ROLES)
+for child in child_spans:
+    assert child.parent is not None
+    assert child.parent.trace_id == parent_spans[0].context.trace_id
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+        )
+        if result.returncode != 0:
+            pytest.fail(
+                f"Subprocess failed:\nstdout: {result.stdout}\n"
+                f"stderr: {result.stderr}"
+            )
 
 
 class TestCustomRoleSubset:

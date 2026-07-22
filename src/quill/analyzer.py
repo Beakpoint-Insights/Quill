@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import anthropic
 import click
 from anthropic.types import MessageParam, TextBlock
+from opentelemetry import context as otel_context
 from opentelemetry import trace
 
 from quill.cache import ResponseCache
@@ -197,13 +198,21 @@ async def _analyze_role(
         An AnalysisResult — either a success or an error result.
     """
     loop = asyncio.get_running_loop()
+    ctx = otel_context.get_current()
     try:
         if on_progress:
             on_progress(role.name, RoleStatus.IN_PROGRESS)
-        result = await loop.run_in_executor(
-            None,
-            lambda: analyze_document(text, role, api_key=api_key, no_cache=no_cache),
-        )
+
+        def _run_with_context() -> AnalysisResult:
+            token = otel_context.attach(ctx)
+            try:
+                return analyze_document(
+                    text, role, api_key=api_key, no_cache=no_cache
+                )
+            finally:
+                otel_context.detach(token)
+
+        result = await loop.run_in_executor(None, _run_with_context)
         if on_progress:
             on_progress(role.name, RoleStatus.COMPLETED)
         return result

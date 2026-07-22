@@ -29,7 +29,6 @@ def main(verbose: bool) -> None:
     load_dotenv()
     if verbose:
         logging.basicConfig(level=logging.DEBUG, format="%(name)s: %(message)s")
-    init_tracing()
     if not _atexit_registered:
         atexit.register(shutdown_tracing)
         _atexit_registered = True
@@ -60,6 +59,7 @@ def analyze(
     department: str | None,
 ) -> None:
     """Analyze a legal document."""
+    init_tracing(project=project, department=department)
     text = read_file(file)
     console = Console()
 

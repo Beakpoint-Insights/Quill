@@ -14,10 +14,18 @@ __all__ = ["init_tracing", "shutdown_tracing"]
 _provider: TracerProvider | None = None
 
 
-def init_tracing() -> TracerProvider:
+def init_tracing(
+    *,
+    project: str | None = None,
+    department: str | None = None,
+) -> TracerProvider:
     """Initialize OpenTelemetry tracing.
 
     Idempotent: returns the existing provider if already initialized.
+
+    Args:
+        project: Project or matter name for cost attribution.
+        department: Department name mapped to ``service.namespace``.
 
     Returns:
         The active TracerProvider.
@@ -29,12 +37,15 @@ def init_tracing() -> TracerProvider:
     from quill import __version__
 
     service_name = os.environ.get("OTEL_SERVICE_NAME", "quill")
-    resource = Resource.create(
-        {
-            "service.name": service_name,
-            "service.version": __version__,
-        }
-    )
+    attributes: dict[str, str] = {
+        "service.name": service_name,
+        "service.version": __version__,
+    }
+    if department is not None:
+        attributes["service.namespace"] = department
+    if project is not None:
+        attributes["beakpoint.project"] = project
+    resource = Resource.create(attributes)
 
     _provider = TracerProvider(resource=resource)
 

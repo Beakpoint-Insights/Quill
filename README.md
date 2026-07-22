@@ -1,5 +1,10 @@
 # Quill
 
+[![Lint](https://github.com/Beakpoint-Insights/Quill/actions/workflows/lint.yml/badge.svg)](https://github.com/Beakpoint-Insights/Quill/actions/workflows/lint.yml)
+[![Test](https://github.com/Beakpoint-Insights/Quill/actions/workflows/test.yml/badge.svg)](https://github.com/Beakpoint-Insights/Quill/actions/workflows/test.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 AI-powered legal document analyzer that routes work across multiple LLM providers and model tiers, mirroring how a law firm staffs tasks from clerk to senior partner.
 
 Built to showcase [Beakpoint](https://beakpoint.io) token usage tracking, multi-model cost attribution, and per-project spend analysis using real OpenTelemetry instrumentation.

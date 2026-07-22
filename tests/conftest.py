@@ -6,7 +6,6 @@ from anthropic.types import Message, TextBlock, Usage
 
 from quill.cache import ResponseCache
 
-
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -26,7 +25,12 @@ def anthropic_response():
         id="msg_test_0001",
         type="message",
         role="assistant",
-        content=[TextBlock(type="text", text="This document is a mutual non-disclosure agreement.")],
+        content=[
+            TextBlock(
+                type="text",
+                text="This document is a mutual non-disclosure agreement.",
+            )
+        ],
         model="claude-sonnet-4-20250514",
         stop_reason="end_turn",
         usage=Usage(input_tokens=1200, output_tokens=85),

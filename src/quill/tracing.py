@@ -24,8 +24,10 @@ def init_tracing(
     Idempotent: returns the existing provider if already initialized.
 
     Args:
-        project: Project or matter name for cost attribution.
-        department: Department name mapped to ``service.namespace``.
+        project: Project or matter name set as ``service.name`` so
+            Beakpoint can slice costs by project.
+        department: Department name. When provided, replaces the
+            default ``service.namespace`` value of ``"quill"``.
 
     Returns:
         The active TracerProvider.
@@ -36,15 +38,13 @@ def init_tracing(
 
     from quill import __version__
 
-    service_name = os.environ.get("OTEL_SERVICE_NAME", "quill")
+    service_name = project or os.environ.get("OTEL_SERVICE_NAME", "quill")
+    namespace = department or "quill"
     attributes: dict[str, str] = {
         "service.name": service_name,
+        "service.namespace": namespace,
         "service.version": __version__,
     }
-    if department is not None:
-        attributes["service.namespace"] = department
-    if project is not None:
-        attributes["beakpoint.project"] = project
     resource = Resource.create(attributes)
 
     _provider = TracerProvider(resource=resource)

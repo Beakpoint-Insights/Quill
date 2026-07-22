@@ -22,70 +22,70 @@ def teardown_function():
     _reset_otel()
 
 
-def test_department_sets_service_namespace():
-    """service.namespace resource attribute is set from --department."""
+def test_default_namespace_is_quill(monkeypatch):
+    """service.namespace defaults to 'quill' when no flags are set."""
+    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
+    provider = init_tracing()
+    assert provider.resource.attributes["service.namespace"] == "quill"
+
+
+def test_department_overrides_namespace():
+    """--department overrides service.namespace from 'quill'."""
     provider = init_tracing(department="M&A")
     assert provider.resource.attributes["service.namespace"] == "M&A"
 
 
-def test_project_sets_beakpoint_project():
-    """beakpoint.project resource attribute is set from --project."""
+def test_project_sets_service_name():
+    """--project sets service.name."""
     provider = init_tracing(project="Acme-Acquisition")
-    assert provider.resource.attributes["beakpoint.project"] == "Acme-Acquisition"
+    assert provider.resource.attributes["service.name"] == "Acme-Acquisition"
 
 
-def test_both_attributes_set_together():
-    """Both attributes are present when both flags are provided."""
+def test_both_flags_together():
+    """Both flags set their respective attributes."""
     provider = init_tracing(project="Acme-Acquisition", department="M&A")
     attrs = provider.resource.attributes
+    assert attrs["service.name"] == "Acme-Acquisition"
     assert attrs["service.namespace"] == "M&A"
-    assert attrs["beakpoint.project"] == "Acme-Acquisition"
 
 
-def test_no_namespace_when_department_omitted():
-    """service.namespace is absent when --department is not provided."""
-    provider = init_tracing()
-    assert "service.namespace" not in provider.resource.attributes
-
-
-def test_no_project_when_project_omitted():
-    """beakpoint.project is absent when --project is not provided."""
-    provider = init_tracing()
-    assert "beakpoint.project" not in provider.resource.attributes
-
-
-def test_only_department_sets_only_namespace():
-    """Only service.namespace is set when only --department is provided."""
-    provider = init_tracing(department="Litigation")
-    attrs = provider.resource.attributes
-    assert attrs["service.namespace"] == "Litigation"
-    assert "beakpoint.project" not in attrs
-
-
-def test_only_project_sets_only_project():
-    """Only beakpoint.project is set when only --project is provided."""
+def test_namespace_stays_quill_with_only_project(monkeypatch):
+    """service.namespace remains 'quill' when only --project is set."""
+    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
     provider = init_tracing(project="Widget-Deal")
     attrs = provider.resource.attributes
-    assert attrs["beakpoint.project"] == "Widget-Deal"
-    assert "service.namespace" not in attrs
+    assert attrs["service.name"] == "Widget-Deal"
+    assert attrs["service.namespace"] == "quill"
 
 
-def test_attributes_on_tracer_provider_resource():
-    """Attributes are set on the TracerProvider resource, not per-span."""
+def test_project_takes_precedence_over_env_var(monkeypatch):
+    """--project overrides OTEL_SERVICE_NAME env var."""
+    monkeypatch.setenv("OTEL_SERVICE_NAME", "quill-from-env")
+    provider = init_tracing(project="Acme-Acquisition")
+    assert provider.resource.attributes["service.name"] == "Acme-Acquisition"
+
+
+def test_env_var_used_when_no_project(monkeypatch):
+    """OTEL_SERVICE_NAME env var is used when --project is not set."""
+    monkeypatch.setenv("OTEL_SERVICE_NAME", "quill-staging")
+    provider = init_tracing()
+    assert provider.resource.attributes["service.name"] == "quill-staging"
+
+
+def test_attributes_on_resource_not_spans():
+    """Attribution attributes are on the resource, not per-span."""
     provider = init_tracing(project="Test-Project", department="Legal")
     tracer = provider.get_tracer("test")
     with tracer.start_as_current_span("test-span") as span:
         span_attrs = dict(span.attributes) if span.attributes else {}
-        assert "beakpoint.project" not in span_attrs
+        assert "service.name" not in span_attrs
         assert "service.namespace" not in span_attrs
-    resource_attrs = provider.resource.attributes
-    assert resource_attrs["beakpoint.project"] == "Test-Project"
-    assert resource_attrs["service.namespace"] == "Legal"
-
-
-def test_base_attributes_still_present_with_attribution():
-    """service.name and service.version are still set alongside attribution."""
-    provider = init_tracing(project="Acme", department="R&D")
     attrs = provider.resource.attributes
-    assert attrs["service.name"] == "quill"
-    assert "service.version" in attrs
+    assert attrs["service.name"] == "Test-Project"
+    assert attrs["service.namespace"] == "Legal"
+
+
+def test_service_version_always_present():
+    """service.version is always set regardless of flags."""
+    provider = init_tracing(project="Acme", department="R&D")
+    assert "service.version" in provider.resource.attributes

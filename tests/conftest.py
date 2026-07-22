@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,6 +8,9 @@ from anthropic.types import Message, TextBlock, Usage
 from quill.cache import ResponseCache
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+os.environ.pop("OTEL_EXPORTER_OTLP_HEADERS", None)
 
 
 @pytest.fixture

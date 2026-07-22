@@ -50,7 +50,8 @@ def _no_cache(tmp_path: Path) -> ResponseCache:
 
 
 @pytest.fixture
-def mock_anthropic(anthropic_response):
+def mock_anthropic(anthropic_response, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     with patch("anthropic.Anthropic") as mock_cls:
         client = mock_cls.return_value
         client.messages.create.return_value = anthropic_response

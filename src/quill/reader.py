@@ -54,7 +54,7 @@ def _read_pdf(filepath: Path) -> str:
         click.ClickException: If the PDF cannot be opened or read.
     """
     try:
-        with pymupdf.open(filepath) as doc:
+        with pymupdf.open(filepath) as doc:  # type: ignore[no-untyped-call]
             pages = [page.get_text() for page in doc]
     except Exception as exc:
         raise click.ClickException(f"Cannot read PDF: {exc}") from exc

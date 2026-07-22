@@ -11,7 +11,7 @@ from quill.progress import ProgressTracker, RoleStatus, _build_table
 from quill.roles import ALL_ROLES
 
 
-def _make_response(role_name: str) -> Message:
+def _make_anthropic_response(role_name: str) -> Message:
     return Message(
         id=f"msg_{role_name.replace(' ', '_').lower()}",
         type="message",
@@ -21,6 +21,17 @@ def _make_response(role_name: str) -> Message:
         stop_reason="end_turn",
         usage=Usage(input_tokens=100, output_tokens=50),
     )
+
+
+def _make_openai_response(role_name: str, model: str = "gpt-4.1-mini") -> MagicMock:
+    mock_resp = MagicMock()
+    mock_resp.choices = [MagicMock()]
+    mock_resp.choices[0].message.content = f"Analysis from {role_name}."
+    mock_resp.choices[0].finish_reason = "stop"
+    mock_resp.model = model
+    mock_resp.usage.prompt_tokens = 100
+    mock_resp.usage.completion_tokens = 50
+    return mock_resp
 
 
 class TestRoleStatus:
@@ -106,15 +117,26 @@ class TestProgressTracker:
 class TestProgressIntegration:
     def test_callback_fires_during_parallel_execution(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
         status_log: list[tuple[str, RoleStatus]] = []
 
         def track(name: str, status: RoleStatus) -> None:
             status_log.append((name, status))
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name)
+                for r in ALL_ROLES
+                if r.provider == "anthropic"
+            ]
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model)
+                for r in ALL_ROLES
+                if r.provider == "openai"
             ]
             analyze_document_all_roles("contract text", on_progress=track)
 
@@ -131,6 +153,7 @@ class TestProgressIntegration:
 
     def test_failed_role_fires_failed_status(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
         status_log: list[tuple[str, RoleStatus]] = []
 
@@ -139,18 +162,26 @@ class TestProgressIntegration:
 
         import anthropic
 
-        call_count = 0
+        anthropic_call_count = 0
 
-        def side_effect(**kwargs):
-            nonlocal call_count
-            idx = call_count
-            call_count += 1
+        def anthropic_side_effect(**kwargs):
+            nonlocal anthropic_call_count
+            idx = anthropic_call_count
+            anthropic_call_count += 1
             if idx == 0:
                 raise anthropic.APIConnectionError(request=MagicMock())
-            return _make_response(f"role_{idx}")
+            return _make_anthropic_response(f"role_{idx}")
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = side_effect
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = anthropic_side_effect
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model)
+                for r in ALL_ROLES
+                if r.provider == "openai"
+            ]
             analyze_document_all_roles("contract text", on_progress=track)
 
         failed = [(n, s) for n, s in status_log if s == RoleStatus.FAILED]
@@ -158,15 +189,26 @@ class TestProgressIntegration:
 
     def test_each_role_transitions_through_in_progress(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
         status_log: list[tuple[str, RoleStatus]] = []
 
         def track(name: str, status: RoleStatus) -> None:
             status_log.append((name, status))
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name)
+                for r in ALL_ROLES
+                if r.provider == "anthropic"
+            ]
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model)
+                for r in ALL_ROLES
+                if r.provider == "openai"
             ]
             analyze_document_all_roles("contract text", on_progress=track)
 

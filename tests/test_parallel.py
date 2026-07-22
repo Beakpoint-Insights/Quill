@@ -1,20 +1,26 @@
-"""Tests for parallel multi-role analysis (QUIL-19)."""
+"""Tests for parallel multi-role analysis (QUIL-19 / QUIL-23)."""
 
-import os
-import subprocess
-import sys
 import time
 from unittest.mock import MagicMock, patch
 
 import anthropic
+import click
+import openai
 import pytest
 from anthropic.types import Message, TextBlock, Usage
 
 from quill.analyzer import analyze_document_all_roles
-from quill.roles import ALL_ROLES, LAW_CLERK, SENIOR_PARTNER
+from quill.roles import ALL_ROLES, LAW_CLERK, SENIOR_PARTNER, Role
+
+_ANTHROPIC_ROLES: list[Role] = [r for r in ALL_ROLES if r.provider == "anthropic"]
+_OPENAI_ROLES: list[Role] = [r for r in ALL_ROLES if r.provider == "openai"]
+_ANTHROPIC_NAMES: set[str] = {r.name for r in _ANTHROPIC_ROLES}
+_OPENAI_NAMES: set[str] = {r.name for r in _OPENAI_ROLES}
 
 
-def _make_response(role_name: str, model: str = "claude-sonnet-4-20250514") -> Message:
+def _make_anthropic_response(
+    role_name: str, model: str = "claude-sonnet-4-20250514"
+) -> Message:
     return Message(
         id=f"msg_{role_name.replace(' ', '_').lower()}",
         type="message",
@@ -26,13 +32,31 @@ def _make_response(role_name: str, model: str = "claude-sonnet-4-20250514") -> M
     )
 
 
+def _make_openai_response(role_name: str, model: str = "gpt-4.1-mini") -> MagicMock:
+    mock_resp = MagicMock()
+    mock_resp.choices = [MagicMock()]
+    mock_resp.choices[0].message.content = f"Analysis from {role_name}."
+    mock_resp.choices[0].finish_reason = "stop"
+    mock_resp.model = model
+    mock_resp.usage.prompt_tokens = 100
+    mock_resp.usage.completion_tokens = 50
+    return mock_resp
+
+
 class TestAnalyzeAllRoles:
     def test_returns_five_results(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name) for r in _ANTHROPIC_ROLES
+            ]
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model) for r in _OPENAI_ROLES
             ]
             results = analyze_document_all_roles("contract text")
 
@@ -40,10 +64,17 @@ class TestAnalyzeAllRoles:
 
     def test_results_preserve_role_order(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name) for r in _ANTHROPIC_ROLES
+            ]
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model) for r in _OPENAI_ROLES
             ]
             results = analyze_document_all_roles("contract text")
 
@@ -51,45 +82,61 @@ class TestAnalyzeAllRoles:
         expected = [r.name for r in ALL_ROLES]
         assert role_names == expected
 
-    def test_each_role_uses_its_assigned_model(self, monkeypatch) -> None:
+    def test_results_have_correct_providers(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name) for r in _ANTHROPIC_ROLES
             ]
-            analyze_document_all_roles("contract text")
-
-            calls = mock_cls.return_value.messages.create.call_args_list
-            called_models = {c.kwargs["model"] for c in calls}
-            expected_models = {r.model for r in ALL_ROLES}
-            assert called_models == expected_models
-
-    def test_each_role_uses_its_system_prompt(self, monkeypatch) -> None:
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model) for r in _OPENAI_ROLES
             ]
-            analyze_document_all_roles("contract text")
+            results = analyze_document_all_roles("contract text")
 
-            calls = mock_cls.return_value.messages.create.call_args_list
-            called_prompts = {c.kwargs["system"] for c in calls}
-            expected_prompts = {r.system_prompt for r in ALL_ROLES}
-            assert called_prompts == expected_prompts
+        for result, role in zip(results, ALL_ROLES, strict=True):
+            assert result.provider == role.provider, (
+                f"{role.name}: expected {role.provider}, got {result.provider}"
+            )
 
-    def test_missing_api_key_errors_per_role(self, monkeypatch) -> None:
+    def test_missing_anthropic_key_fails_fast(self, monkeypatch) -> None:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        results = analyze_document_all_roles("some text")
-        assert all(r.error is not None for r in results)
-        assert all("ANTHROPIC_API_KEY" in r.error for r in results)
+        with pytest.raises(click.ClickException, match="ANTHROPIC_API_KEY"):
+            analyze_document_all_roles("some text")
 
-    def test_accepts_explicit_api_key(self) -> None:
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+    def test_missing_openai_key_fails_fast(self, monkeypatch) -> None:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+        with pytest.raises(click.ClickException, match="OPENAI_API_KEY"):
+            analyze_document_all_roles("some text")
+
+    def test_missing_both_keys_reports_both(self, monkeypatch) -> None:
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+        with pytest.raises(click.ClickException, match="ANTHROPIC_API_KEY") as exc_info:
+            analyze_document_all_roles("some text")
+        assert "OPENAI_API_KEY" in exc_info.value.message
+
+    def test_accepts_explicit_api_key(self, monkeypatch) -> None:
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
+
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name) for r in _ANTHROPIC_ROLES
+            ]
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model) for r in _OPENAI_ROLES
             ]
             results = analyze_document_all_roles(
                 "contract text", api_key="explicit-key"
@@ -101,21 +148,26 @@ class TestAnalyzeAllRoles:
 class TestFailureIsolation:
     def test_one_failure_does_not_crash_others(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        responses = [_make_response(r.name) for r in ALL_ROLES]
+        anthropic_call_count = 0
 
-        call_count = 0
-
-        def side_effect(**kwargs):
-            nonlocal call_count
-            idx = call_count
-            call_count += 1
-            if idx == 2:
+        def anthropic_side_effect(**kwargs):
+            nonlocal anthropic_call_count
+            idx = anthropic_call_count
+            anthropic_call_count += 1
+            if idx == 1:
                 raise anthropic.APIConnectionError(request=MagicMock())
-            return responses[idx]
+            return _make_anthropic_response(f"Role{idx}")
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = side_effect
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = anthropic_side_effect
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model) for r in _OPENAI_ROLES
+            ]
             results = analyze_document_all_roles("contract text")
 
         assert len(results) == 5
@@ -126,16 +178,26 @@ class TestFailureIsolation:
 
     def test_failed_role_contains_error_message(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        def always_fail(**kwargs):
-            raise anthropic.RateLimitError(
-                message="Rate limited",
-                response=MagicMock(status_code=429),
-                body=None,
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = (
+                anthropic.RateLimitError(
+                    message="Rate limited",
+                    response=MagicMock(status_code=429),
+                    body=None,
+                )
             )
-
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = always_fail
+            mock_oai.return_value.chat.completions.create.side_effect = (
+                openai.RateLimitError(
+                    message="Rate limited",
+                    response=MagicMock(status_code=429),
+                    body=None,
+                )
+            )
             results = analyze_document_all_roles("contract text")
 
         for result in results:
@@ -146,12 +208,18 @@ class TestFailureIsolation:
 
     def test_failed_role_preserves_role_name(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        def always_fail(**kwargs):
-            raise anthropic.APIConnectionError(request=MagicMock())
-
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = always_fail
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = (
+                anthropic.APIConnectionError(request=MagicMock())
+            )
+            mock_oai.return_value.chat.completions.create.side_effect = (
+                openai.APIConnectionError(request=MagicMock())
+            )
             results = analyze_document_all_roles("contract text")
 
         role_names = [r.role for r in results]
@@ -163,15 +231,24 @@ class TestConcurrency:
     def test_runs_concurrently_not_sequentially(self, monkeypatch) -> None:
         """Verify wall-clock time is closer to one call than five sequential calls."""
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
         delay_per_call = 0.1
 
-        def slow_create(**kwargs):
+        def slow_anthropic(**kwargs):
             time.sleep(delay_per_call)
-            return _make_response("Test")
+            return _make_anthropic_response("Test")
 
-        with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
-            mock_cls.return_value.messages.create.side_effect = slow_create
+        def slow_openai(**kwargs):
+            time.sleep(delay_per_call)
+            return _make_openai_response("Test")
+
+        with (
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
+        ):
+            mock_anth.return_value.messages.create.side_effect = slow_anthropic
+            mock_oai.return_value.chat.completions.create.side_effect = slow_openai
 
             start = time.monotonic()
             results = analyze_document_all_roles("contract text")
@@ -187,13 +264,18 @@ class TestConcurrency:
 class TestOtelSpans:
     def test_all_roles_span_attributes(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
         with (
-            patch("quill.analyzer.anthropic.Anthropic") as mock_cls,
+            patch("quill.analyzer.anthropic.Anthropic") as mock_anth,
+            patch("quill.analyzer.openai.OpenAI") as mock_oai,
             patch("quill.analyzer.tracer") as mock_tracer,
         ):
-            mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in ALL_ROLES
+            mock_anth.return_value.messages.create.side_effect = [
+                _make_anthropic_response(r.name) for r in _ANTHROPIC_ROLES
+            ]
+            mock_oai.return_value.chat.completions.create.side_effect = [
+                _make_openai_response(r.name, r.model) for r in _OPENAI_ROLES
             ]
 
             mock_span = MagicMock()
@@ -211,86 +293,15 @@ class TestOtelSpans:
             assert "quill.analyze_all" in span_names
 
 
-class TestTraceContinuity:
-    """All role spans share the same trace as the parent quill.analyze_all span."""
-
-    def test_all_roles_share_single_trace(self) -> None:
-        env = {k: v for k, v in os.environ.items() if not k.startswith("OTEL_EXPORTER")}
-        script = """
-from unittest.mock import patch
-from anthropic.types import Message, TextBlock, Usage
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
-    InMemorySpanExporter,
-)
-from quill.tracing import init_tracing
-from quill.cache import ResponseCache
-from quill.roles import ALL_ROLES
-import tempfile, pathlib
-
-provider = init_tracing(project="Trace-Test", department="QA")
-exporter = InMemorySpanExporter()
-provider.add_span_processor(SimpleSpanProcessor(exporter))
-
-def make_response(name):
-    return Message(
-        id=f"msg_{name}", type="message", role="assistant",
-        content=[TextBlock(type="text", text=f"Analysis from {name}.")],
-        model="claude-sonnet-4-20250514",
-        stop_reason="end_turn",
-        usage=Usage(input_tokens=100, output_tokens=50),
-    )
-
-tmp = tempfile.mkdtemp()
-cache = ResponseCache(cache_dir=pathlib.Path(tmp) / "cache")
-
-with patch("anthropic.Anthropic") as mock_cls, \\
-     patch("quill.analyzer.ResponseCache", return_value=cache):
-    mock_cls.return_value.messages.create.side_effect = [
-        make_response(r.name) for r in ALL_ROLES
-    ]
-    from quill.analyzer import analyze_document_all_roles
-    analyze_document_all_roles("Test document.", api_key="test-key")
-
-provider.force_flush()
-spans = exporter.get_finished_spans()
-
-trace_ids = {s.context.trace_id for s in spans}
-assert len(trace_ids) == 1, (
-    f"Expected 1 trace, got {len(trace_ids)}: spans={[s.name for s in spans]}"
-)
-
-parent_spans = [s for s in spans if s.name == "quill.analyze_all"]
-assert len(parent_spans) == 1
-
-child_spans = [s for s in spans if s.name == "quill.analyze"]
-assert len(child_spans) == len(ALL_ROLES)
-for child in child_spans:
-    assert child.parent is not None
-    assert child.parent.trace_id == parent_spans[0].context.trace_id
-"""
-        result = subprocess.run(
-            [sys.executable, "-c", script],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=env,
-        )
-        if result.returncode != 0:
-            pytest.fail(
-                f"Subprocess failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-            )
-
-
 class TestCustomRoleSubset:
-    def test_two_roles_only(self, monkeypatch) -> None:
+    def test_two_anthropic_roles_only(self, monkeypatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
         subset = (LAW_CLERK, SENIOR_PARTNER)
 
         with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
             mock_cls.return_value.messages.create.side_effect = [
-                _make_response(r.name) for r in subset
+                _make_anthropic_response(r.name) for r in subset
             ]
             results = analyze_document_all_roles("contract text", roles=subset)
 

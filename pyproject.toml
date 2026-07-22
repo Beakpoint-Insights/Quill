@@ -7,11 +7,14 @@ requires-python = ">=3.11"
 dependencies = [
     "click>=8.1",
     "anthropic>=0.52",
+    "openai>=1.0",
     "pymupdf>=1.25",
     "opentelemetry-api>=1.20",
     "opentelemetry-sdk>=1.20",
     "opentelemetry-exporter-otlp-proto-http>=1.20",
     "opentelemetry-instrumentation-anthropic>=0.1",
+    "opentelemetry-instrumentation-openai-v2>=2.0",
+    "orjson>=3.9",
     "rich>=13.0",
     "python-dotenv>=1.0",
 ]

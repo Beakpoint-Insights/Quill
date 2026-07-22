@@ -5,14 +5,40 @@ import os
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 __all__ = ["get_department", "init_tracing", "shutdown_tracing"]
 
 _provider: TracerProvider | None = None
 _department: str | None = None
+
+
+class _GenAiSystemProcessor(SpanProcessor):
+    """Copy ``gen_ai.provider.name`` to ``gen_ai.system`` on span start.
+
+    Modern OTel GenAI instrumentors emit ``gen_ai.provider.name`` but
+    Beakpoint cost calculation requires ``gen_ai.system``.
+    """
+
+    def on_start(self, span: Span, parent_context: object = None) -> None:
+        attrs = span.attributes
+        if attrs is None:
+            return
+        provider_name = attrs.get("gen_ai.provider.name")
+        if provider_name and not attrs.get("gen_ai.system"):
+            span.set_attribute("gen_ai.system", str(provider_name))
+
+    def on_end(self, span: ReadableSpan) -> None:
+        pass
+
+    def shutdown(self) -> None:
+        pass
+
+    def force_flush(self, timeout_millis: int = 30000) -> bool:
+        return True
 
 
 def get_department() -> str | None:
@@ -59,6 +85,7 @@ def init_tracing(
     resource = Resource.create(attributes)
 
     _provider = TracerProvider(resource=resource)
+    _provider.add_span_processor(_GenAiSystemProcessor())
 
     endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
     if endpoint:
@@ -70,6 +97,11 @@ def init_tracing(
     if instrumentor.is_instrumented_by_opentelemetry:
         instrumentor.uninstrument()
     instrumentor.instrument(tracer_provider=_provider)
+
+    openai_instrumentor = OpenAIInstrumentor()  # type: ignore[no-untyped-call]
+    if openai_instrumentor.is_instrumented_by_opentelemetry:
+        openai_instrumentor.uninstrument()
+    openai_instrumentor.instrument(tracer_provider=_provider)
 
     return _provider
 

@@ -58,12 +58,19 @@ def main(verbose: bool) -> None:
     default=False,
     help="Bypass the local response cache and always call the API.",
 )
+@click.option(
+    "--doc-type",
+    type=click.Choice(["nda", "msa", "employment"], case_sensitive=False),
+    default=None,
+    help="Document type for specialised prompts (e.g. nda, msa, employment).",
+)
 def analyze(
     file: str,
     single_role: bool,
     project: str,
     department: str,
     no_cache: bool,
+    doc_type: str | None,
 ) -> None:
     """Analyze a legal document."""
     init_tracing(project=project, department=department)
@@ -72,12 +79,15 @@ def analyze(
 
     if single_role:
         with console.status("Analyzing document...", spinner="dots"):
-            result = analyze_document(text, no_cache=no_cache)
+            result = analyze_document(text, no_cache=no_cache, doc_type=doc_type)
         display_analysis(result)
     else:
         with ProgressTracker(ALL_ROLES, console=console) as tracker:
             results = analyze_document_all_roles(
-                text, on_progress=tracker.make_callback(), no_cache=no_cache
+                text,
+                on_progress=tracker.make_callback(),
+                no_cache=no_cache,
+                doc_type=doc_type,
             )
         display_multi_analysis(results)
         if all(r.error for r in results):

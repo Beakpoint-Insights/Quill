@@ -143,9 +143,7 @@ def analyze_document(
             (b for b in response.content if isinstance(b, TextBlock)), None
         )
         if content_block is None:
-            raise click.ClickException(
-                "Unexpected response format from Anthropic API."
-            )
+            raise click.ClickException("Unexpected response format from Anthropic API.")
 
         analysis_text = content_block.text
         if truncated:
@@ -227,9 +225,7 @@ async def _analyze_all_roles_async(
     Returns:
         A list of AnalysisResults in the same order as the input roles.
     """
-    tasks = [
-        _analyze_role(text, role, api_key, on_progress) for role in roles
-    ]
+    tasks = [_analyze_role(text, role, api_key, on_progress) for role in roles]
     return list(await asyncio.gather(*tasks))
 
 

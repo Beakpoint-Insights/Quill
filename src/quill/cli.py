@@ -10,7 +10,9 @@ from rich.console import Console
 from quill import __version__
 from quill.analyzer import analyze_document, analyze_document_all_roles
 from quill.output import display_analysis, display_multi_analysis
+from quill.progress import ProgressTracker
 from quill.reader import read_file
+from quill.roles import ALL_ROLES
 from quill.tracing import init_tracing, shutdown_tracing
 
 __all__ = ["main"]
@@ -47,8 +49,10 @@ def analyze(file: str, all_roles: bool) -> None:
     console = Console()
 
     if all_roles:
-        with console.status("Analyzing with all roles...", spinner="dots"):
-            results = analyze_document_all_roles(text)
+        with ProgressTracker(ALL_ROLES, console=console) as tracker:
+            results = analyze_document_all_roles(
+                text, on_progress=tracker.make_callback()
+            )
         display_multi_analysis(results)
     else:
         with console.status("Analyzing document...", spinner="dots"):

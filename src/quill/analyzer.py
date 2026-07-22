@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import anthropic
@@ -11,9 +12,12 @@ from anthropic.types import MessageParam, TextBlock
 from opentelemetry import trace
 
 from quill.cache import ResponseCache
+from quill.progress import RoleStatus
 from quill.roles import ALL_ROLES, SENIOR_PARTNER, Role
 
 __all__ = ["AnalysisResult", "analyze_document", "analyze_document_all_roles"]
+
+ProgressCallback = Callable[[str, RoleStatus], None]
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +170,7 @@ async def _analyze_role(
     text: str,
     role: Role,
     api_key: str,
+    on_progress: ProgressCallback | None = None,
 ) -> AnalysisResult:
     """Run a single role's analysis in a thread, returning an error result on failure.
 
@@ -173,19 +178,28 @@ async def _analyze_role(
         text: The document text to analyze.
         role: The role to execute.
         api_key: Anthropic API key.
+        on_progress: Optional callback for status updates.
 
     Returns:
         An AnalysisResult — either a success or an error result.
     """
+    if on_progress:
+        on_progress(role.name, RoleStatus.IN_PROGRESS)
+
     loop = asyncio.get_running_loop()
     try:
-        return await loop.run_in_executor(
+        result = await loop.run_in_executor(
             None,
             lambda: analyze_document(text, role, api_key=api_key),
         )
+        if on_progress:
+            on_progress(role.name, RoleStatus.COMPLETED)
+        return result
     except (click.ClickException, Exception) as exc:
         error_msg = exc.message if isinstance(exc, click.ClickException) else str(exc)
         logger.error("Role %s failed: %s", role.name, error_msg)
+        if on_progress:
+            on_progress(role.name, RoleStatus.FAILED)
         return AnalysisResult(
             text="",
             role=role.name,
@@ -200,6 +214,7 @@ async def _analyze_all_roles_async(
     text: str,
     roles: tuple[Role, ...],
     api_key: str,
+    on_progress: ProgressCallback | None = None,
 ) -> list[AnalysisResult]:
     """Fan out all roles concurrently and collect results.
 
@@ -207,11 +222,14 @@ async def _analyze_all_roles_async(
         text: The document text to analyze.
         roles: The roles to execute.
         api_key: Anthropic API key.
+        on_progress: Optional callback for status updates.
 
     Returns:
         A list of AnalysisResults in the same order as the input roles.
     """
-    tasks = [_analyze_role(text, role, api_key) for role in roles]
+    tasks = [
+        _analyze_role(text, role, api_key, on_progress) for role in roles
+    ]
     return list(await asyncio.gather(*tasks))
 
 
@@ -220,6 +238,7 @@ def analyze_document_all_roles(
     roles: tuple[Role, ...] = ALL_ROLES,
     *,
     api_key: str | None = None,
+    on_progress: ProgressCallback | None = None,
 ) -> list[AnalysisResult]:
     """Analyze a legal document with all roles in parallel.
 
@@ -227,6 +246,7 @@ def analyze_document_all_roles(
         text: The document text to analyze.
         roles: Roles to execute (defaults to ALL_ROLES).
         api_key: Anthropic API key. Falls back to ANTHROPIC_API_KEY env var.
+        on_progress: Optional callback for status updates.
 
     Returns:
         A list of AnalysisResults, one per role, in role order.
@@ -244,5 +264,5 @@ def analyze_document_all_roles(
         },
     ):
         return asyncio.run(
-            _analyze_all_roles_async(text, roles, resolved_key)
+            _analyze_all_roles_async(text, roles, resolved_key, on_progress)
         )

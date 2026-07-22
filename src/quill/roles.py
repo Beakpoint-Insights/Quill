@@ -2,7 +2,16 @@
 
 from dataclasses import dataclass
 
-__all__ = ["Role", "ALL_ROLES", "get_role"]
+__all__ = [
+    "Role",
+    "ALL_ROLES",
+    "LAW_CLERK",
+    "RESEARCH_ASSISTANT",
+    "PARALEGAL",
+    "JUNIOR_ASSOCIATE",
+    "SENIOR_PARTNER",
+    "get_role",
+]
 
 
 @dataclass(frozen=True)

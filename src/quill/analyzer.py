@@ -181,11 +181,10 @@ async def _analyze_role(
     Returns:
         An AnalysisResult — either a success or an error result.
     """
-    if on_progress:
-        on_progress(role.name, RoleStatus.IN_PROGRESS)
-
     loop = asyncio.get_running_loop()
     try:
+        if on_progress:
+            on_progress(role.name, RoleStatus.IN_PROGRESS)
         result = await loop.run_in_executor(
             None,
             lambda: analyze_document(text, role, api_key=api_key),
@@ -193,7 +192,7 @@ async def _analyze_role(
         if on_progress:
             on_progress(role.name, RoleStatus.COMPLETED)
         return result
-    except (click.ClickException, Exception) as exc:
+    except Exception as exc:
         error_msg = exc.message if isinstance(exc, click.ClickException) else str(exc)
         logger.error("Role %s failed: %s", role.name, error_msg)
         if on_progress:

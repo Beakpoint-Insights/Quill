@@ -18,8 +18,15 @@ def display_analysis(result: AnalysisResult) -> None:
     """
     console = Console()
 
-    md = Markdown(result.text)
-    panel = Panel(md, title=f"[bold]{result.role}[/bold]", border_style="blue")
+    if result.error:
+        panel = Panel(
+            f"[red]Error: {result.error}[/red]",
+            title=f"[bold]{result.role}[/bold]",
+            border_style="red",
+        )
+    else:
+        md = Markdown(result.text)
+        panel = Panel(md, title=f"[bold]{result.role}[/bold]", border_style="blue")
     console.print(panel)
 
     source = "cached" if result.cache_hit else "live"

@@ -58,3 +58,5 @@ def analyze(file: str, single_role: bool) -> None:
                 text, on_progress=tracker.make_callback()
             )
         display_multi_analysis(results)
+        if all(r.error for r in results):
+            raise click.ClickException(results[0].error or "All roles failed.")

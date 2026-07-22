@@ -144,6 +144,9 @@ def test_analyze_default_role_is_senior_partner(monkeypatch, anthropic_response)
         mock_cls.return_value.messages.create.return_value = anthropic_response
         result = analyze_document("Some legal text")
 
+        call_kwargs = mock_cls.return_value.messages.create.call_args.kwargs
+        assert call_kwargs["model"] == "claude-sonnet-5"
+        assert call_kwargs["system"] == SENIOR_PARTNER.system_prompt
     assert result.role == "Senior Partner"
 
 

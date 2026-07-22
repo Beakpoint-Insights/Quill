@@ -44,16 +44,16 @@ class TestRoleDefinitions:
 
 class TestModelAssignments:
     def test_law_clerk_uses_haiku(self) -> None:
-        assert LAW_CLERK.model == "claude-haiku-3-5"
+        assert LAW_CLERK.model == "claude-haiku-4-5-20251001"
 
     def test_research_assistant_uses_haiku(self) -> None:
-        assert RESEARCH_ASSISTANT.model == "claude-haiku-3-5"
+        assert RESEARCH_ASSISTANT.model == "claude-haiku-4-5-20251001"
 
     def test_paralegal_uses_sonnet(self) -> None:
-        assert PARALEGAL.model == "claude-sonnet-4"
+        assert PARALEGAL.model == "claude-sonnet-4-6"
 
     def test_junior_associate_uses_sonnet(self) -> None:
-        assert JUNIOR_ASSOCIATE.model == "claude-sonnet-4"
+        assert JUNIOR_ASSOCIATE.model == "claude-sonnet-4-6"
 
     def test_senior_partner_uses_opus_tier(self) -> None:
         assert SENIOR_PARTNER.model == "claude-sonnet-5"

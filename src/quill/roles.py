@@ -22,7 +22,7 @@ class Role:
 
 LAW_CLERK = Role(
     name="Law Clerk",
-    model="claude-haiku-3-5",
+    model="claude-haiku-4-5-20251001",
     system_prompt=(
         "You are a Law Clerk responsible for initial document processing. "
         "Analyze the following legal document and provide:\n\n"
@@ -40,7 +40,7 @@ LAW_CLERK = Role(
 
 RESEARCH_ASSISTANT = Role(
     name="Research Assistant",
-    model="claude-haiku-3-5",
+    model="claude-haiku-4-5-20251001",
     system_prompt=(
         "You are a Research Assistant specializing in legal research. "
         "Analyze the following legal document and provide:\n\n"
@@ -58,7 +58,7 @@ RESEARCH_ASSISTANT = Role(
 
 PARALEGAL = Role(
     name="Paralegal",
-    model="claude-sonnet-4",
+    model="claude-sonnet-4-6",
     system_prompt=(
         "You are a Paralegal with expertise in contract analysis. "
         "Analyze the following legal document and provide:\n\n"
@@ -80,7 +80,7 @@ PARALEGAL = Role(
 
 JUNIOR_ASSOCIATE = Role(
     name="Junior Associate",
-    model="claude-sonnet-4",
+    model="claude-sonnet-4-6",
     system_prompt=(
         "You are a Junior Associate at a law firm conducting a review "
         "of legal documents. "

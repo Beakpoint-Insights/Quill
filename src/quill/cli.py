@@ -38,23 +38,23 @@ def main(verbose: bool) -> None:
 @main.command()
 @click.argument("file", type=click.Path(exists=True, dir_okay=False))
 @click.option(
-    "--all-roles",
+    "--single-role",
     is_flag=True,
     default=False,
-    help="Run all five roles in parallel instead of just Senior Partner.",
+    help="Run only the Senior Partner role instead of all five.",
 )
-def analyze(file: str, all_roles: bool) -> None:
+def analyze(file: str, single_role: bool) -> None:
     """Analyze a legal document."""
     text = read_file(file)
     console = Console()
 
-    if all_roles:
+    if single_role:
+        with console.status("Analyzing document...", spinner="dots"):
+            result = analyze_document(text)
+        display_analysis(result)
+    else:
         with ProgressTracker(ALL_ROLES, console=console) as tracker:
             results = analyze_document_all_roles(
                 text, on_progress=tracker.make_callback()
             )
         display_multi_analysis(results)
-    else:
-        with console.status("Analyzing document...", spinner="dots"):
-            result = analyze_document(text)
-        display_analysis(result)

@@ -8,9 +8,11 @@ from dotenv import load_dotenv
 from rich.console import Console
 
 from quill import __version__
-from quill.analyzer import analyze_document
-from quill.output import display_analysis
+from quill.analyzer import analyze_document, analyze_document_all_roles
+from quill.output import display_analysis, display_multi_analysis
+from quill.progress import ProgressTracker
 from quill.reader import read_file
+from quill.roles import ALL_ROLES
 from quill.tracing import init_tracing, shutdown_tracing
 
 __all__ = ["main"]
@@ -35,10 +37,26 @@ def main(verbose: bool) -> None:
 
 @main.command()
 @click.argument("file", type=click.Path(exists=True, dir_okay=False))
-def analyze(file: str) -> None:
+@click.option(
+    "--single-role",
+    is_flag=True,
+    default=False,
+    help="Run only the Senior Partner role instead of all five.",
+)
+def analyze(file: str, single_role: bool) -> None:
     """Analyze a legal document."""
     text = read_file(file)
     console = Console()
-    with console.status("Analyzing document...", spinner="dots"):
-        result = analyze_document(text)
-    display_analysis(result)
+
+    if single_role:
+        with console.status("Analyzing document...", spinner="dots"):
+            result = analyze_document(text)
+        display_analysis(result)
+    else:
+        with ProgressTracker(ALL_ROLES, console=console) as tracker:
+            results = analyze_document_all_roles(
+                text, on_progress=tracker.make_callback()
+            )
+        display_multi_analysis(results)
+        if all(r.error for r in results):
+            raise click.ClickException(results[0].error or "All roles failed.")

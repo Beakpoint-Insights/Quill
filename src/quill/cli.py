@@ -4,6 +4,7 @@ import click
 
 from quill import __version__
 from quill.analyzer import analyze_document
+from quill.output import display_analysis
 from quill.reader import read_file
 from quill.tracing import init_tracing, shutdown_tracing
 
@@ -22,4 +23,4 @@ def analyze(file):
     """Analyze a legal document."""
     text = read_file(file)
     result = analyze_document(text)
-    click.echo(result)
+    display_analysis(result)

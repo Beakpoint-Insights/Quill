@@ -1,7 +1,18 @@
 import os
+from dataclasses import dataclass
 
 import anthropic
 import click
+
+
+@dataclass
+class AnalysisResult:
+    text: str
+    role: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+
 
 SENIOR_PARTNER_PROMPT = """\
 You are a Senior Partner at a top-tier law firm with 30 years of experience. \
@@ -21,7 +32,7 @@ Concrete suggestions for terms to negotiate, modify, or add before execution.\
 """
 
 
-def analyze_document(text: str) -> str:
+def analyze_document(text: str) -> AnalysisResult:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise click.ClickException(
@@ -46,4 +57,10 @@ def analyze_document(text: str) -> str:
     except anthropic.APIError as e:
         raise click.ClickException(f"Anthropic API error: {e}")
 
-    return response.content[0].text
+    return AnalysisResult(
+        text=response.content[0].text,
+        role="Senior Partner",
+        model=response.model,
+        input_tokens=response.usage.input_tokens,
+        output_tokens=response.usage.output_tokens,
+    )

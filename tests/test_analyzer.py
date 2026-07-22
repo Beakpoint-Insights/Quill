@@ -14,7 +14,11 @@ def test_analyze_returns_response_text(monkeypatch, anthropic_response):
         mock_cls.return_value.messages.create.return_value = anthropic_response
         result = analyze_document("Some legal text")
 
-    assert result == "This document is a mutual non-disclosure agreement."
+    assert result.text == "This document is a mutual non-disclosure agreement."
+    assert result.role == "Senior Partner"
+    assert result.model == "claude-sonnet-4-20250514"
+    assert result.input_tokens == 1200
+    assert result.output_tokens == 85
 
 
 def test_analyze_calls_claude_opus(monkeypatch, anthropic_response):

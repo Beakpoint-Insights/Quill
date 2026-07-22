@@ -9,9 +9,19 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-__all__ = ["init_tracing", "shutdown_tracing"]
+__all__ = ["get_department", "init_tracing", "shutdown_tracing"]
 
 _provider: TracerProvider | None = None
+_department: str | None = None
+
+
+def get_department() -> str | None:
+    """Return the department set during initialization.
+
+    Returns:
+        The department string, or None if not set.
+    """
+    return _department
 
 
 def init_tracing(
@@ -24,25 +34,25 @@ def init_tracing(
     Idempotent: returns the existing provider if already initialized.
 
     Args:
-        project: Project or matter name set as ``service.name`` so
-            Beakpoint can slice costs by project.
-        department: Department name. When provided, replaces the
-            default ``service.namespace`` value of ``"quill"``.
+        project: Project or matter name set as ``service.name``.
+        department: Department name stored for ``app.user.org.id``
+            span-level attribution.
 
     Returns:
         The active TracerProvider.
     """
-    global _provider
+    global _provider, _department
     if _provider is not None:
         return _provider
+
+    _department = department
 
     from quill import __version__
 
     service_name = project or os.environ.get("OTEL_SERVICE_NAME", "quill")
-    namespace = department or "quill"
     attributes: dict[str, str] = {
         "service.name": service_name,
-        "service.namespace": namespace,
+        "service.namespace": "quill",
         "service.version": __version__,
     }
     resource = Resource.create(attributes)
@@ -65,7 +75,8 @@ def init_tracing(
 
 def shutdown_tracing() -> None:
     """Shut down the tracer provider and flush pending spans."""
-    global _provider
+    global _provider, _department
     if _provider is not None:
         _provider.shutdown()
         _provider = None
+    _department = None

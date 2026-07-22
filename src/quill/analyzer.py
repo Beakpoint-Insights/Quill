@@ -14,6 +14,7 @@ from opentelemetry import trace
 from quill.cache import ResponseCache
 from quill.progress import RoleStatus
 from quill.roles import ALL_ROLES, SENIOR_PARTNER, Role
+from quill.tracing import get_department
 
 __all__ = ["AnalysisResult", "analyze_document", "analyze_document_all_roles"]
 
@@ -92,13 +93,18 @@ def analyze_document(
     resolved_key = _require_api_key(api_key)
     cache = ResponseCache()
 
+    span_attrs: dict[str, str | bool | int] = {
+        "code.function.name": "quill.analyzer.analyze_document",
+        "quill.role": role.name,
+        "quill.model": role.model,
+    }
+    dept = get_department()
+    if dept is not None:
+        span_attrs["app.user.org.id"] = dept
+
     with tracer.start_as_current_span(
         "quill.analyze",
-        attributes={
-            "code.function.name": "quill.analyzer.analyze_document",
-            "quill.role": role.name,
-            "quill.model": role.model,
-        },
+        attributes=span_attrs,
     ) as span:
         response = cache.get(role.model, role.system_prompt, text)
         cache_hit = response is not None
@@ -251,12 +257,17 @@ def analyze_document_all_roles(
     """
     resolved_key = _require_api_key(api_key)
 
+    all_span_attrs: dict[str, str | int] = {
+        "code.function.name": "quill.analyzer.analyze_document_all_roles",
+        "quill.roles.count": len(roles),
+    }
+    dept = get_department()
+    if dept is not None:
+        all_span_attrs["app.user.org.id"] = dept
+
     with tracer.start_as_current_span(
         "quill.analyze_all",
-        attributes={
-            "code.function.name": "quill.analyzer.analyze_document_all_roles",
-            "quill.roles.count": len(roles),
-        },
+        attributes=all_span_attrs,
     ):
         return asyncio.run(
             _analyze_all_roles_async(text, roles, resolved_key, on_progress)

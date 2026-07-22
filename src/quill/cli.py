@@ -44,19 +44,19 @@ def main(verbose: bool) -> None:
 )
 @click.option(
     "--project",
-    default=None,
+    required=True,
     help="Project or matter name for cost attribution (e.g. 'Acme-Acquisition').",
 )
 @click.option(
     "--department",
-    default=None,
+    required=True,
     help="Department name for cost attribution (e.g. 'M&A').",
 )
 def analyze(
     file: str,
     single_role: bool,
-    project: str | None,
-    department: str | None,
+    project: str,
+    department: str,
 ) -> None:
     """Analyze a legal document."""
     init_tracing(project=project, department=department)

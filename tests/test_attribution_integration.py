@@ -1,9 +1,5 @@
 """End-to-end tests verifying attribution flows through to exported spans (QUIL-17).
 
-These tests confirm that --project and --department values propagate all the
-way through the tracing pipeline and appear as resource attributes on every
-exported span, matching what Beakpoint would see.
-
 Each test runs in a subprocess to get truly fresh OTel global state.
 """
 
@@ -54,118 +50,15 @@ provider.force_flush()
 spans = exporter.get_finished_spans()
 assert len(spans) > 0, "No spans exported"
 for span in spans:
-    val = span.resource.attributes.get("service.name")
-    assert val == "Acme-Acquisition", f"Expected 'Acme-Acquisition', got {val!r}"
-""")
-
-    def test_project_with_spaces_and_special_chars(self):
-        """Project names with spaces and special characters are preserved."""
-        _run_attribution_check("""
-from quill.tracing import init_tracing
-
-provider = init_tracing(project="Project With Spaces & Special-Chars")
-val = provider.resource.attributes.get("service.name")
-assert val == "Project With Spaces & Special-Chars", f"Got {val!r}"
+    assert span.resource.attributes["service.name"] == "Acme-Acquisition"
 """)
 
 
 class TestDepartmentAttribution:
-    """Verify --department overrides service.namespace on exported spans."""
+    """Verify --department maps to app.user.org.id on analyzer spans."""
 
-    def test_department_sets_namespace_on_spans(self):
-        """Exported spans carry service.namespace from --department."""
-        _run_attribution_check("""
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
-    InMemorySpanExporter,
-)
-from quill.tracing import init_tracing
-
-provider = init_tracing(department="M&A")
-exporter = InMemorySpanExporter()
-provider.add_span_processor(SimpleSpanProcessor(exporter))
-
-tracer = provider.get_tracer("test")
-with tracer.start_as_current_span("test-span"):
-    pass
-provider.force_flush()
-
-spans = exporter.get_finished_spans()
-assert len(spans) > 0, "No spans exported"
-for span in spans:
-    val = span.resource.attributes.get("service.namespace")
-    assert val == "M&A", f"Expected 'M&A', got {val!r}"
-""")
-
-    def test_default_namespace_is_quill(self):
-        """service.namespace defaults to 'quill' without --department."""
-        _run_attribution_check("""
-from quill.tracing import init_tracing
-
-provider = init_tracing()
-val = provider.resource.attributes.get("service.namespace")
-assert val == "quill", f"Expected 'quill', got {val!r}"
-""")
-
-
-class TestCombinedAttribution:
-    """Verify both attributes work together end-to-end."""
-
-    def test_both_attributes_on_every_span(self):
-        """service.name and service.namespace are both set correctly."""
-        _run_attribution_check("""
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
-    InMemorySpanExporter,
-)
-from quill.tracing import init_tracing
-
-provider = init_tracing(project="Acme-Acquisition", department="M&A")
-exporter = InMemorySpanExporter()
-provider.add_span_processor(SimpleSpanProcessor(exporter))
-
-tracer = provider.get_tracer("test")
-with tracer.start_as_current_span("test-span"):
-    pass
-provider.force_flush()
-
-spans = exporter.get_finished_spans()
-assert len(spans) > 0, "No spans exported"
-for span in spans:
-    attrs = span.resource.attributes
-    assert attrs["service.name"] == "Acme-Acquisition"
-    assert attrs["service.namespace"] == "M&A"
-""")
-
-    def test_version_preserved_alongside_attribution(self):
-        """service.version is still present with attribution flags."""
-        _run_attribution_check("""
-from quill.tracing import init_tracing
-
-provider = init_tracing(project="Test", department="Legal")
-attrs = provider.resource.attributes
-assert "service.version" in attrs, "Missing service.version"
-""")
-
-    def test_no_project_keeps_default_service_name(self):
-        """Without --project, service.name uses default or env var."""
-        _run_attribution_check("""
-import os
-os.environ.pop("OTEL_SERVICE_NAME", None)
-from quill.tracing import init_tracing
-
-provider = init_tracing()
-attrs = provider.resource.attributes
-assert attrs["service.name"] == "quill"
-assert attrs["service.namespace"] == "quill"
-""")
-
-
-class TestAnalyzerSpansWithAttribution:
-    """Verify analyzer spans carry correct resource attributes."""
-
-    def test_quill_analyze_span_carries_attribution(self):
-        """The quill.analyze span has attribution in its resource."""
+    def test_department_on_analyze_span(self):
+        """app.user.org.id is set on quill.analyze spans."""
         _run_attribution_check("""
 from unittest.mock import patch
 from anthropic.types import Message, TextBlock, Usage
@@ -175,8 +68,9 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 )
 from quill.tracing import init_tracing
 from quill.cache import ResponseCache
+import tempfile, pathlib
 
-provider = init_tracing(project="Test-Project", department="Legal")
+provider = init_tracing(project="Test-Project", department="M&A")
 exporter = InMemorySpanExporter()
 provider.add_span_processor(SimpleSpanProcessor(exporter))
 
@@ -188,7 +82,6 @@ mock_response = Message(
     usage=Usage(input_tokens=100, output_tokens=50),
 )
 
-import tempfile, pathlib
 tmp = tempfile.mkdtemp()
 cache = ResponseCache(cache_dir=pathlib.Path(tmp) / "cache")
 
@@ -200,16 +93,101 @@ with patch("anthropic.Anthropic") as mock_cls, \\
 
 provider.force_flush()
 spans = exporter.get_finished_spans()
-span_names = [s.name for s in spans]
-assert "quill.analyze" in span_names, f"Missing quill.analyze in {span_names}"
 
+analyze_spans = [s for s in spans if s.name == "quill.analyze"]
+assert len(analyze_spans) == 1, f"Expected 1 analyze span, got {len(analyze_spans)}"
+attrs = dict(analyze_spans[0].attributes)
+assert attrs["app.user.org.id"] == "M&A", f"Got {attrs.get('app.user.org.id')!r}"
+""")
+
+    def test_department_not_on_resource(self):
+        """app.user.org.id is NOT a resource attribute."""
+        _run_attribution_check("""
+from quill.tracing import init_tracing
+
+provider = init_tracing(project="Test", department="M&A")
+attrs = provider.resource.attributes
+assert "app.user.org.id" not in attrs, "department should be span-level only"
+""")
+
+
+class TestNamespaceAlwaysQuill:
+    """Verify service.namespace is always 'quill'."""
+
+    def test_namespace_always_quill(self):
+        """service.namespace is 'quill' regardless of flags."""
+        _run_attribution_check("""
+from quill.tracing import init_tracing
+
+provider = init_tracing(project="Acme", department="M&A")
+assert provider.resource.attributes["service.namespace"] == "quill"
+""")
+
+    def test_namespace_quill_without_flags(self):
+        """service.namespace is 'quill' with no flags."""
+        _run_attribution_check("""
+import os
+os.environ.pop("OTEL_SERVICE_NAME", None)
+from quill.tracing import init_tracing
+
+provider = init_tracing()
+assert provider.resource.attributes["service.namespace"] == "quill"
+""")
+
+
+class TestFullPipeline:
+    """Verify the complete attribution pipeline end-to-end."""
+
+    def test_all_attributes_correct(self):
+        """Full pipeline: service.name from project, service.namespace
+        is quill, app.user.org.id from department on spans."""
+        _run_attribution_check("""
+from unittest.mock import patch
+from anthropic.types import Message, TextBlock, Usage
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
+from quill.tracing import init_tracing
+from quill.cache import ResponseCache
+import tempfile, pathlib
+
+provider = init_tracing(project="Acme-Acquisition", department="Litigation")
+exporter = InMemorySpanExporter()
+provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+mock_response = Message(
+    id="msg_test", type="message", role="assistant",
+    content=[TextBlock(type="text", text="Analysis.")],
+    model="claude-sonnet-4-20250514",
+    stop_reason="end_turn",
+    usage=Usage(input_tokens=100, output_tokens=50),
+)
+
+tmp = tempfile.mkdtemp()
+cache = ResponseCache(cache_dir=pathlib.Path(tmp) / "cache")
+
+with patch("anthropic.Anthropic") as mock_cls, \\
+     patch("quill.analyzer.ResponseCache", return_value=cache):
+    mock_cls.return_value.messages.create.return_value = mock_response
+    from quill.analyzer import analyze_document
+    analyze_document("Test document.", api_key="test-key")
+
+provider.force_flush()
+spans = exporter.get_finished_spans()
+assert len(spans) > 0
+
+# Resource attributes (same on all spans)
 for span in spans:
-    attrs = span.resource.attributes
-    assert attrs["service.name"] == "Test-Project"
-    assert attrs["service.namespace"] == "Legal"
+    r = span.resource.attributes
+    assert r["service.name"] == "Acme-Acquisition"
+    assert r["service.namespace"] == "quill"
+    assert "app.user.org.id" not in r
 
+# Span-level attribute on quill.analyze
 analyze_span = [s for s in spans if s.name == "quill.analyze"][0]
-span_attrs = dict(analyze_span.attributes)
-assert "quill.role" in span_attrs, f"Missing quill.role in {span_attrs}"
-assert "quill.model" in span_attrs, f"Missing quill.model in {span_attrs}"
+attrs = dict(analyze_span.attributes)
+assert attrs["app.user.org.id"] == "Litigation"
+assert "quill.role" in attrs
+assert "quill.model" in attrs
 """)

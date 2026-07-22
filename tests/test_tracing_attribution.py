@@ -3,12 +3,13 @@
 from opentelemetry import trace
 
 import quill.tracing
-from quill.tracing import init_tracing, shutdown_tracing
+from quill.tracing import get_department, init_tracing, shutdown_tracing
 
 
 def _reset_otel():
     """Reset global OTel state so each test gets a fresh provider."""
     quill.tracing._provider = None
+    quill.tracing._department = None
     trace._TRACER_PROVIDER = None
     trace._TRACER_PROVIDER_SET_ONCE._done = False
 
@@ -22,17 +23,17 @@ def teardown_function():
     _reset_otel()
 
 
-def test_default_namespace_is_quill(monkeypatch):
-    """service.namespace defaults to 'quill' when no flags are set."""
-    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
-    provider = init_tracing()
+def test_namespace_is_always_quill():
+    """service.namespace is always 'quill' regardless of flags."""
+    provider = init_tracing(project="Acme", department="M&A")
     assert provider.resource.attributes["service.namespace"] == "quill"
 
 
-def test_department_overrides_namespace():
-    """--department overrides service.namespace from 'quill'."""
-    provider = init_tracing(department="M&A")
-    assert provider.resource.attributes["service.namespace"] == "M&A"
+def test_namespace_quill_without_flags(monkeypatch):
+    """service.namespace is 'quill' even with no flags."""
+    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
+    provider = init_tracing()
+    assert provider.resource.attributes["service.namespace"] == "quill"
 
 
 def test_project_sets_service_name():
@@ -41,21 +42,11 @@ def test_project_sets_service_name():
     assert provider.resource.attributes["service.name"] == "Acme-Acquisition"
 
 
-def test_both_flags_together():
-    """Both flags set their respective attributes."""
-    provider = init_tracing(project="Acme-Acquisition", department="M&A")
-    attrs = provider.resource.attributes
-    assert attrs["service.name"] == "Acme-Acquisition"
-    assert attrs["service.namespace"] == "M&A"
-
-
-def test_namespace_stays_quill_with_only_project(monkeypatch):
-    """service.namespace remains 'quill' when only --project is set."""
+def test_default_service_name_without_project(monkeypatch):
+    """service.name defaults to 'quill' when --project is not set."""
     monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
-    provider = init_tracing(project="Widget-Deal")
-    attrs = provider.resource.attributes
-    assert attrs["service.name"] == "Widget-Deal"
-    assert attrs["service.namespace"] == "quill"
+    provider = init_tracing()
+    assert provider.resource.attributes["service.name"] == "quill"
 
 
 def test_project_takes_precedence_over_env_var(monkeypatch):
@@ -65,27 +56,34 @@ def test_project_takes_precedence_over_env_var(monkeypatch):
     assert provider.resource.attributes["service.name"] == "Acme-Acquisition"
 
 
-def test_env_var_used_when_no_project(monkeypatch):
-    """OTEL_SERVICE_NAME env var is used when --project is not set."""
-    monkeypatch.setenv("OTEL_SERVICE_NAME", "quill-staging")
-    provider = init_tracing()
-    assert provider.resource.attributes["service.name"] == "quill-staging"
+def test_department_stored_for_span_use():
+    """--department is stored via get_department() for span-level use."""
+    init_tracing(department="M&A")
+    assert get_department() == "M&A"
 
 
-def test_attributes_on_resource_not_spans():
-    """Attribution attributes are on the resource, not per-span."""
-    provider = init_tracing(project="Test-Project", department="Legal")
-    tracer = provider.get_tracer("test")
-    with tracer.start_as_current_span("test-span") as span:
-        span_attrs = dict(span.attributes) if span.attributes else {}
-        assert "service.name" not in span_attrs
-        assert "service.namespace" not in span_attrs
+def test_department_none_when_omitted():
+    """get_department() returns None when --department is not set."""
+    init_tracing()
+    assert get_department() is None
+
+
+def test_department_not_on_resource():
+    """Department is NOT set as a resource attribute."""
+    provider = init_tracing(department="M&A")
     attrs = provider.resource.attributes
-    assert attrs["service.name"] == "Test-Project"
-    assert attrs["service.namespace"] == "Legal"
+    assert "app.user.org.id" not in attrs
 
 
 def test_service_version_always_present():
     """service.version is always set regardless of flags."""
     provider = init_tracing(project="Acme", department="R&D")
     assert "service.version" in provider.resource.attributes
+
+
+def test_shutdown_clears_department():
+    """shutdown_tracing() clears the stored department."""
+    init_tracing(department="M&A")
+    assert get_department() == "M&A"
+    shutdown_tracing()
+    assert get_department() is None

@@ -1,0 +1,19 @@
+name: Quill
+id: 'ari:cloud:compass:5fce4cfe-d9f7-426b-a473-fb0e6f7431df:component/da63e7b3-f9d2-4bf1-9d94-b41c639cd631/90d3d948-0f70-4ecb-a333-4c2a40fa8d7f'
+description: null
+configVersion: 1
+typeId: APPLICATION
+ownerId: 'ari:cloud:identity::team/540658de-11e8-46ee-a34c-63cce31a6d9d'
+fields:
+  tier: 4
+  isMonorepoProject: false
+links:
+  - name: null
+    type: REPOSITORY
+    url: 'https://github.com/Beakpoint-Insights/Quill'
+relationships: {}
+labels: null
+customFields: null
+
+# Learn more about formatting compass.yml:
+# https://go.atlassian.com/compass-yml-format

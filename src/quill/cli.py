@@ -43,7 +43,22 @@ def main(verbose: bool) -> None:
     default=False,
     help="Run only the Senior Partner role instead of all five.",
 )
-def analyze(file: str, single_role: bool) -> None:
+@click.option(
+    "--project",
+    default=None,
+    help="Project or matter name for cost attribution (e.g. 'Acme-Acquisition').",
+)
+@click.option(
+    "--department",
+    default=None,
+    help="Department name for cost attribution (e.g. 'M&A').",
+)
+def analyze(
+    file: str,
+    single_role: bool,
+    project: str | None,
+    department: str | None,
+) -> None:
     """Analyze a legal document."""
     text = read_file(file)
     console = Console()

@@ -150,6 +150,26 @@ def test_analyze_default_role_is_senior_partner(monkeypatch, anthropic_response)
     assert result.role == "Senior Partner"
 
 
+def test_analyze_no_cache_bypasses_cache(
+    monkeypatch, anthropic_response, _no_cache
+):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    with patch("quill.analyzer.anthropic.Anthropic") as mock_cls:
+        mock_cls.return_value.messages.create.return_value = anthropic_response
+
+        _no_cache.put(
+            SENIOR_PARTNER.model,
+            SENIOR_PARTNER.system_prompt,
+            "Cached text",
+            anthropic_response,
+        )
+        result = analyze_document("Cached text", no_cache=True)
+
+        assert result.cache_hit is False
+        assert mock_cls.return_value.messages.create.called
+
+
 def test_analyze_sets_otel_attributes(monkeypatch, anthropic_response):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
@@ -172,3 +192,64 @@ def test_analyze_sets_otel_attributes(monkeypatch, anthropic_response):
         attrs = call_kwargs.kwargs.get("attributes", {})
         assert attrs["quill.role"] == "Law Clerk"
         assert attrs["quill.model"] == "claude-haiku-4-5"
+
+
+def test_analyze_sets_token_usage_on_span(monkeypatch, anthropic_response):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    with (
+        patch("quill.analyzer.anthropic.Anthropic") as mock_cls,
+        patch("quill.analyzer.tracer") as mock_tracer,
+    ):
+        mock_cls.return_value.messages.create.return_value = anthropic_response
+        mock_span = MagicMock()
+        mock_tracer.start_as_current_span.return_value.__enter__ = MagicMock(
+            return_value=mock_span
+        )
+        mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(
+            return_value=False
+        )
+
+        analyze_document("Some text")
+
+        mock_span.set_attribute.assert_any_call(
+            "gen_ai.usage.input_tokens", 1200
+        )
+        mock_span.set_attribute.assert_any_call(
+            "gen_ai.usage.output_tokens", 85
+        )
+
+
+def test_analyze_sets_zero_tokens_on_cache_hit(
+    monkeypatch, anthropic_response, _no_cache
+):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    with (
+        patch("quill.analyzer.anthropic.Anthropic") as mock_cls,
+        patch("quill.analyzer.tracer") as mock_tracer,
+    ):
+        mock_cls.return_value.messages.create.return_value = anthropic_response
+        mock_span = MagicMock()
+        mock_tracer.start_as_current_span.return_value.__enter__ = MagicMock(
+            return_value=mock_span
+        )
+        mock_tracer.start_as_current_span.return_value.__exit__ = MagicMock(
+            return_value=False
+        )
+
+        _no_cache.put(
+            SENIOR_PARTNER.model,
+            SENIOR_PARTNER.system_prompt,
+            "Cached text",
+            anthropic_response,
+        )
+        result = analyze_document("Cached text")
+
+        assert result.cache_hit is True
+        mock_span.set_attribute.assert_any_call(
+            "gen_ai.usage.input_tokens", 0
+        )
+        mock_span.set_attribute.assert_any_call(
+            "gen_ai.usage.output_tokens", 0
+        )

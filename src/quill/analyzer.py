@@ -4,8 +4,11 @@ from dataclasses import dataclass
 import anthropic
 from anthropic.types import MessageParam, TextBlock
 import click
+from opentelemetry import trace
 
 from quill.cache import ResponseCache
+
+tracer = trace.get_tracer("quill.analyzer")
 
 
 @dataclass
@@ -44,39 +47,49 @@ def analyze_document(text: str) -> AnalysisResult:
         )
 
     model = "claude-sonnet-5"
+    role = "Senior Partner"
     cache = ResponseCache()
 
-    response = cache.get(model, SENIOR_PARTNER_PROMPT, text)
-    if response is None:
-        try:
-            client = anthropic.Anthropic(api_key=api_key)
-            messages: list[MessageParam] = [{"role": "user", "content": text}]
-            response = client.messages.create(
-                model=model,
-                max_tokens=4096,
-                system=SENIOR_PARTNER_PROMPT,
-                messages=messages,
-            )
-        except anthropic.AuthenticationError:
-            raise click.ClickException("Invalid ANTHROPIC_API_KEY. Check your API key and try again.")
-        except anthropic.RateLimitError:
-            raise click.ClickException("Rate limited by the Anthropic API. Please wait and try again.")
-        except anthropic.APIConnectionError:
-            raise click.ClickException("Could not connect to the Anthropic API. Check your network connection.")
-        except anthropic.APIError as e:
-            raise click.ClickException(f"Anthropic API error: {e}")
-        cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
+    with tracer.start_as_current_span(
+        "quill.analyze",
+        attributes={
+            "code.function.name": "quill.analyzer.analyze_document",
+        },
+    ) as span:
+        response = cache.get(model, SENIOR_PARTNER_PROMPT, text)
+        cache_hit = response is not None
+        span.set_attribute("quill.cache.hit", cache_hit)
 
-    content_block = next(
-        (b for b in response.content if isinstance(b, TextBlock)), None
-    )
-    if content_block is None:
-        raise click.ClickException("Unexpected response format from Anthropic API.")
+        if response is None:
+            try:
+                client = anthropic.Anthropic(api_key=api_key)
+                messages: list[MessageParam] = [{"role": "user", "content": text}]
+                response = client.messages.create(
+                    model=model,
+                    max_tokens=4096,
+                    system=SENIOR_PARTNER_PROMPT,
+                    messages=messages,
+                )
+            except anthropic.AuthenticationError:
+                raise click.ClickException("Invalid ANTHROPIC_API_KEY. Check your API key and try again.")
+            except anthropic.RateLimitError:
+                raise click.ClickException("Rate limited by the Anthropic API. Please wait and try again.")
+            except anthropic.APIConnectionError:
+                raise click.ClickException("Could not connect to the Anthropic API. Check your network connection.")
+            except anthropic.APIError as e:
+                raise click.ClickException(f"Anthropic API error: {e}")
+            cache.put(model, SENIOR_PARTNER_PROMPT, text, response)
 
-    return AnalysisResult(
-        text=content_block.text,
-        role="Senior Partner",
-        model=response.model,
-        input_tokens=response.usage.input_tokens,
-        output_tokens=response.usage.output_tokens,
-    )
+        content_block = next(
+            (b for b in response.content if isinstance(b, TextBlock)), None
+        )
+        if content_block is None:
+            raise click.ClickException("Unexpected response format from Anthropic API.")
+
+        return AnalysisResult(
+            text=content_block.text,
+            role=role,
+            model=response.model,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+        )

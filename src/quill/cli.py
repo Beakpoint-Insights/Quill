@@ -1,6 +1,8 @@
 import atexit
+import logging
 
 import click
+from dotenv import load_dotenv
 from rich.console import Console
 
 from quill import __version__
@@ -12,8 +14,12 @@ from quill.tracing import init_tracing, shutdown_tracing
 
 @click.group()
 @click.version_option(version=__version__, prog_name="quill")
-def main():
+@click.option("--verbose", "-v", is_flag=True, help="Enable debug logging.")
+def main(verbose: bool) -> None:
     """Quill - AI-powered legal document analyzer."""
+    load_dotenv()
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG, format="%(name)s: %(message)s")
     init_tracing()
     atexit.register(shutdown_tracing)
 

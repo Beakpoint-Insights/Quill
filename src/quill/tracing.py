@@ -14,14 +14,19 @@ _provider: TracerProvider | None = None
 def init_tracing() -> TracerProvider:
     global _provider
 
+    from quill import __version__
+
     service_name = os.environ.get("OTEL_SERVICE_NAME", "quill")
-    resource = Resource.create({"service.name": service_name})
+    resource = Resource.create({
+        "service.name": service_name,
+        "service.version": __version__,
+    })
 
     _provider = TracerProvider(resource=resource)
 
     endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
     if endpoint:
-        exporter = OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")
+        exporter = OTLPSpanExporter(endpoint=endpoint)
         _provider.add_span_processor(BatchSpanProcessor(exporter))
 
     trace.set_tracer_provider(_provider)

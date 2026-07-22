@@ -1,13 +1,18 @@
+import atexit
+
 import click
 
 from quill import __version__
 from quill.reader import read_file
+from quill.tracing import init_tracing, shutdown_tracing
 
 
 @click.group()
 @click.version_option(version=__version__, prog_name="quill")
 def main():
     """Quill - AI-powered legal document analyzer."""
+    init_tracing()
+    atexit.register(shutdown_tracing)
 
 
 @main.command()

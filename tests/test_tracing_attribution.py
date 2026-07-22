@@ -75,6 +75,12 @@ def test_department_not_on_resource():
     assert "app.user.org.id" not in attrs
 
 
+def test_gen_ai_system_is_anthropic():
+    """gen_ai.system is always 'anthropic'."""
+    provider = init_tracing(project="Acme")
+    assert provider.resource.attributes["gen_ai.system"] == "anthropic"
+
+
 def test_service_version_always_present():
     """service.version is always set regardless of flags."""
     provider = init_tracing(project="Acme", department="R&D")

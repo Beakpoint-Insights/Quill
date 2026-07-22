@@ -25,3 +25,9 @@ def test_analyze_no_argument():
     result = CliRunner().invoke(main, ["analyze"])
     assert result.exit_code != 0
     assert "Missing argument" in result.output
+
+
+def test_analyze_help_documents_no_cache_flag():
+    result = CliRunner().invoke(main, ["analyze", "--help"])
+    assert result.exit_code == 0
+    assert "--no-cache" in result.output

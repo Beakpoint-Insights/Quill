@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import anthropic
 import click
 from anthropic.types import MessageParam, TextBlock
+from opentelemetry import context as otel_context
 from opentelemetry import trace
 
 from quill.cache import ResponseCache
@@ -76,6 +77,7 @@ def analyze_document(
     role: Role = SENIOR_PARTNER,
     *,
     api_key: str | None = None,
+    no_cache: bool = False,
 ) -> AnalysisResult:
     """Analyze a legal document using the Anthropic API.
 
@@ -83,6 +85,7 @@ def analyze_document(
         text: The document text to analyze.
         role: The role to use for analysis.
         api_key: Anthropic API key. Falls back to ANTHROPIC_API_KEY env var.
+        no_cache: When True, bypass the local response cache.
 
     Returns:
         An AnalysisResult with the model's assessment.
@@ -105,7 +108,7 @@ def analyze_document(
         "quill.analyze",
         attributes=span_attrs,
     ) as span:
-        response = cache.get(role.model, role.system_prompt, text)
+        response = None if no_cache else cache.get(role.model, role.system_prompt, text)
         cache_hit = response is not None
         span.set_attribute("quill.cache.hit", cache_hit)
 
@@ -141,6 +144,11 @@ def analyze_document(
             except OSError:
                 logger.warning("Failed to write cache, continuing with result")
 
+        input_tokens = response.usage.input_tokens if not cache_hit else 0
+        output_tokens = response.usage.output_tokens if not cache_hit else 0
+        span.set_attribute("gen_ai.usage.input_tokens", input_tokens)
+        span.set_attribute("gen_ai.usage.output_tokens", output_tokens)
+
         truncated = response.stop_reason == "max_tokens"
         if truncated:
             logger.warning("Response was truncated (max_tokens reached)")
@@ -163,8 +171,8 @@ def analyze_document(
             text=analysis_text,
             role=role.name,
             model=response.model,
-            input_tokens=response.usage.input_tokens if not cache_hit else 0,
-            output_tokens=response.usage.output_tokens if not cache_hit else 0,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
             cache_hit=cache_hit,
             truncated=truncated,
         )
@@ -175,6 +183,7 @@ async def _analyze_role(
     role: Role,
     api_key: str | None,
     on_progress: ProgressCallback | None = None,
+    no_cache: bool = False,
 ) -> AnalysisResult:
     """Run a single role's analysis in a thread, returning an error result on failure.
 
@@ -183,18 +192,25 @@ async def _analyze_role(
         role: The role to execute.
         api_key: Anthropic API key, or None to read from env.
         on_progress: Optional callback for status updates.
+        no_cache: When True, bypass the local response cache.
 
     Returns:
         An AnalysisResult — either a success or an error result.
     """
     loop = asyncio.get_running_loop()
+    ctx = otel_context.get_current()
     try:
         if on_progress:
             on_progress(role.name, RoleStatus.IN_PROGRESS)
-        result = await loop.run_in_executor(
-            None,
-            lambda: analyze_document(text, role, api_key=api_key),
-        )
+
+        def _run_with_context() -> AnalysisResult:
+            token = otel_context.attach(ctx)
+            try:
+                return analyze_document(text, role, api_key=api_key, no_cache=no_cache)
+            finally:
+                otel_context.detach(token)
+
+        result = await loop.run_in_executor(None, _run_with_context)
         if on_progress:
             on_progress(role.name, RoleStatus.COMPLETED)
         return result
@@ -218,6 +234,7 @@ async def _analyze_all_roles_async(
     roles: tuple[Role, ...],
     api_key: str | None,
     on_progress: ProgressCallback | None = None,
+    no_cache: bool = False,
 ) -> list[AnalysisResult]:
     """Fan out all roles concurrently and collect results.
 
@@ -226,11 +243,15 @@ async def _analyze_all_roles_async(
         roles: The roles to execute.
         api_key: Anthropic API key, or None to read from env.
         on_progress: Optional callback for status updates.
+        no_cache: When True, bypass the local response cache.
 
     Returns:
         A list of AnalysisResults in the same order as the input roles.
     """
-    tasks = [_analyze_role(text, role, api_key, on_progress) for role in roles]
+    tasks = [
+        _analyze_role(text, role, api_key, on_progress, no_cache=no_cache)
+        for role in roles
+    ]
     return list(await asyncio.gather(*tasks))
 
 
@@ -240,6 +261,7 @@ def analyze_document_all_roles(
     *,
     api_key: str | None = None,
     on_progress: ProgressCallback | None = None,
+    no_cache: bool = False,
 ) -> list[AnalysisResult]:
     """Analyze a legal document with all roles in parallel.
 
@@ -248,6 +270,7 @@ def analyze_document_all_roles(
         roles: Roles to execute (defaults to ALL_ROLES).
         api_key: Anthropic API key. Falls back to ANTHROPIC_API_KEY env var.
         on_progress: Optional callback for status updates.
+        no_cache: When True, bypass the local response cache.
 
     Returns:
         A list of AnalysisResults, one per role, in role order.
@@ -265,4 +288,8 @@ def analyze_document_all_roles(
         "quill.analyze_all",
         attributes=all_span_attrs,
     ):
-        return asyncio.run(_analyze_all_roles_async(text, roles, api_key, on_progress))
+        return asyncio.run(
+            _analyze_all_roles_async(
+                text, roles, api_key, on_progress, no_cache=no_cache
+            )
+        )

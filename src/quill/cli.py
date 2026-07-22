@@ -52,11 +52,18 @@ def main(verbose: bool) -> None:
     required=True,
     help="Department name for cost attribution (e.g. 'M&A').",
 )
+@click.option(
+    "--no-cache",
+    is_flag=True,
+    default=False,
+    help="Bypass the local response cache and always call the API.",
+)
 def analyze(
     file: str,
     single_role: bool,
     project: str,
     department: str,
+    no_cache: bool,
 ) -> None:
     """Analyze a legal document."""
     init_tracing(project=project, department=department)
@@ -65,12 +72,12 @@ def analyze(
 
     if single_role:
         with console.status("Analyzing document...", spinner="dots"):
-            result = analyze_document(text)
+            result = analyze_document(text, no_cache=no_cache)
         display_analysis(result)
     else:
         with ProgressTracker(ALL_ROLES, console=console) as tracker:
             results = analyze_document_all_roles(
-                text, on_progress=tracker.make_callback()
+                text, on_progress=tracker.make_callback(), no_cache=no_cache
             )
         display_multi_analysis(results)
         if all(r.error for r in results):

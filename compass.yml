@@ -11,6 +11,9 @@ links:
   - name: null
     type: REPOSITORY
     url: 'https://github.com/Beakpoint-Insights/Quill'
+  - name: Jira project
+    type: PROJECT
+    url: 'https://beakpointinsights.atlassian.net/jira/software/c/projects/QUIL/'
 relationships: {}
 labels: null
 customFields: null

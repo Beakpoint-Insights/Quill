@@ -11,7 +11,6 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)
 os.environ.pop("OTEL_EXPORTER_OTLP_HEADERS", None)
-os.environ.setdefault("ANTHROPIC_API_KEY", "test-key-for-ci")
 
 
 @pytest.fixture

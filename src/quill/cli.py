@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from rich.console import Console
 
 from quill import __version__
-from quill.analyzer import analyze_document
-from quill.output import display_analysis
+from quill.analyzer import analyze_document, analyze_document_all_roles
+from quill.output import display_analysis, display_multi_analysis
 from quill.reader import read_file
 from quill.tracing import init_tracing, shutdown_tracing
 
@@ -35,10 +35,22 @@ def main(verbose: bool) -> None:
 
 @main.command()
 @click.argument("file", type=click.Path(exists=True, dir_okay=False))
-def analyze(file: str) -> None:
+@click.option(
+    "--all-roles",
+    is_flag=True,
+    default=False,
+    help="Run all five roles in parallel instead of just Senior Partner.",
+)
+def analyze(file: str, all_roles: bool) -> None:
     """Analyze a legal document."""
     text = read_file(file)
     console = Console()
-    with console.status("Analyzing document...", spinner="dots"):
-        result = analyze_document(text)
-    display_analysis(result)
+
+    if all_roles:
+        with console.status("Analyzing with all roles...", spinner="dots"):
+            results = analyze_document_all_roles(text)
+        display_multi_analysis(results)
+    else:
+        with console.status("Analyzing document...", spinner="dots"):
+            result = analyze_document(text)
+        display_analysis(result)

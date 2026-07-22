@@ -1,5 +1,6 @@
 """Document analysis using the Anthropic API."""
 
+import asyncio
 import logging
 import os
 from dataclasses import dataclass
@@ -10,9 +11,9 @@ from anthropic.types import MessageParam, TextBlock
 from opentelemetry import trace
 
 from quill.cache import ResponseCache
-from quill.roles import SENIOR_PARTNER, Role
+from quill.roles import ALL_ROLES, SENIOR_PARTNER, Role
 
-__all__ = ["AnalysisResult", "analyze_document"]
+__all__ = ["AnalysisResult", "analyze_document", "analyze_document_all_roles"]
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,27 @@ class AnalysisResult:
     error: str | None = None
 
 
+def _require_api_key(api_key: str | None = None) -> str:
+    """Resolve the API key from the argument or environment.
+
+    Args:
+        api_key: Explicit key, or None to read from env.
+
+    Returns:
+        The resolved API key.
+
+    Raises:
+        click.ClickException: If no key is available.
+    """
+    resolved = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    if not resolved:
+        raise click.ClickException(
+            "ANTHROPIC_API_KEY environment variable is not set. "
+            "Get your key at https://console.anthropic.com/"
+        )
+    return resolved
+
+
 def analyze_document(
     text: str,
     role: Role = SENIOR_PARTNER,
@@ -63,13 +85,7 @@ def analyze_document(
     Raises:
         click.ClickException: On missing API key or API errors.
     """
-    resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-    if not resolved_key:
-        raise click.ClickException(
-            "ANTHROPIC_API_KEY environment variable is not set. "
-            "Get your key at https://console.anthropic.com/"
-        )
-
+    resolved_key = _require_api_key(api_key)
     cache = ResponseCache()
 
     with tracer.start_as_current_span(
@@ -143,4 +159,90 @@ def analyze_document(
             output_tokens=response.usage.output_tokens if not cache_hit else 0,
             cache_hit=cache_hit,
             truncated=truncated,
+        )
+
+
+async def _analyze_role(
+    text: str,
+    role: Role,
+    api_key: str,
+) -> AnalysisResult:
+    """Run a single role's analysis in a thread, returning an error result on failure.
+
+    Args:
+        text: The document text to analyze.
+        role: The role to execute.
+        api_key: Anthropic API key.
+
+    Returns:
+        An AnalysisResult — either a success or an error result.
+    """
+    loop = asyncio.get_running_loop()
+    try:
+        return await loop.run_in_executor(
+            None,
+            lambda: analyze_document(text, role, api_key=api_key),
+        )
+    except (click.ClickException, Exception) as exc:
+        error_msg = exc.message if isinstance(exc, click.ClickException) else str(exc)
+        logger.error("Role %s failed: %s", role.name, error_msg)
+        return AnalysisResult(
+            text="",
+            role=role.name,
+            model=role.model,
+            input_tokens=0,
+            output_tokens=0,
+            error=error_msg,
+        )
+
+
+async def _analyze_all_roles_async(
+    text: str,
+    roles: tuple[Role, ...],
+    api_key: str,
+) -> list[AnalysisResult]:
+    """Fan out all roles concurrently and collect results.
+
+    Args:
+        text: The document text to analyze.
+        roles: The roles to execute.
+        api_key: Anthropic API key.
+
+    Returns:
+        A list of AnalysisResults in the same order as the input roles.
+    """
+    tasks = [_analyze_role(text, role, api_key) for role in roles]
+    return list(await asyncio.gather(*tasks))
+
+
+def analyze_document_all_roles(
+    text: str,
+    roles: tuple[Role, ...] = ALL_ROLES,
+    *,
+    api_key: str | None = None,
+) -> list[AnalysisResult]:
+    """Analyze a legal document with all roles in parallel.
+
+    Args:
+        text: The document text to analyze.
+        roles: Roles to execute (defaults to ALL_ROLES).
+        api_key: Anthropic API key. Falls back to ANTHROPIC_API_KEY env var.
+
+    Returns:
+        A list of AnalysisResults, one per role, in role order.
+
+    Raises:
+        click.ClickException: On missing API key.
+    """
+    resolved_key = _require_api_key(api_key)
+
+    with tracer.start_as_current_span(
+        "quill.analyze_all",
+        attributes={
+            "code.function.name": "quill.analyzer.analyze_document_all_roles",
+            "quill.roles.count": len(roles),
+        },
+    ):
+        return asyncio.run(
+            _analyze_all_roles_async(text, roles, resolved_key)
         )

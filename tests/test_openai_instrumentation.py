@@ -228,7 +228,7 @@ def test_both_providers_get_correct_gen_ai_system(monkeypatch) -> None:
     assert "openai" in system_values
 
 
-def test_resource_preserves_gen_ai_system_anthropic() -> None:
-    """Resource-level gen_ai.system=anthropic is preserved from the original config."""
+def test_resource_does_not_set_gen_ai_system() -> None:
+    """Resource-level gen_ai.system must be absent so span-level values win."""
     provider = init_tracing()
-    assert provider.resource.attributes.get("gen_ai.system") == "anthropic"
+    assert "gen_ai.system" not in provider.resource.attributes

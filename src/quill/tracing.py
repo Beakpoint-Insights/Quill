@@ -80,7 +80,6 @@ def init_tracing(
         "service.name": service_name,
         "service.namespace": "quill",
         "service.version": __version__,
-        "gen_ai.system": "anthropic",
     }
     resource = Resource.create(attributes)
 

@@ -5,9 +5,14 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+![Winston, a colorful animated bird, is Beakpoint's mascot. Here, he's pretending to be a lawyer.](images/Winston%20the%20Lawyer.jpeg "Winston")
+
 AI-powered legal document analyzer that routes work across multiple LLM providers and model tiers, mirroring how a law firm staffs tasks from clerk to senior partner.
 
 Built to showcase [Beakpoint](https://beakpoint.io) token usage tracking, multi-model cost attribution, and per-project spend analysis using real OpenTelemetry instrumentation.
+
+> [!IMPORTANT]
+> This application isn't really meant to give you legal advice. It's a demo of how to instrument LLM calls for cost attribution and usage tracking. Relying on it to make legal decisions is a bad idea.
 
 ## Prerequisites
 

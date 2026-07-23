@@ -205,6 +205,8 @@ OTEL_EXPORTER_OTLP_HEADERS=x-bkpt-key=bpk_your_key_here
 
 The `OTLPSpanExporter` in `tracing.py` reads `OTEL_EXPORTER_OTLP_ENDPOINT` automatically. If the variable is unset, no exporter is added and spans are silently discarded — so the app works fine without Beakpoint, just without trace export.
 
+> **📖 Full setup guide:** [Track LLM Costs with Beakpoint](https://docs.beakpoint.io/docs/tasks/getting-started/track-llm-costs)
+
 ### Summary: what you need to replicate this in your own app
 
 1. **Install the OTel SDK and instrumentation libraries** for your LLM providers:

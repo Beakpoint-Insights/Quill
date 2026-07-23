@@ -115,3 +115,25 @@ def test_processor_skips_department_when_not_set():
         attributes={"gen_ai.provider.name": "anthropic"},
     ) as span:
         assert "app.user.org.id" not in span.attributes
+
+
+def test_processor_sets_cloud_provider_from_gen_ai_provider_name():
+    """SpanProcessor sets cloud.provider from gen_ai.provider.name."""
+    init_tracing()
+    tracer = trace.get_tracer("test")
+    with tracer.start_as_current_span(
+        "anthropic.chat",
+        attributes={"gen_ai.provider.name": "anthropic"},
+    ) as span:
+        assert span.attributes["cloud.provider"] == "anthropic"
+
+
+def test_processor_sets_cloud_provider_openai():
+    """SpanProcessor sets cloud.provider to openai for OpenAI spans."""
+    init_tracing()
+    tracer = trace.get_tracer("test")
+    with tracer.start_as_current_span(
+        "openai.chat",
+        attributes={"gen_ai.provider.name": "openai"},
+    ) as span:
+        assert span.attributes["cloud.provider"] == "openai"

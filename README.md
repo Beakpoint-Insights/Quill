@@ -225,6 +225,20 @@ The `OTLPSpanExporter` in `tracing.py` reads `OTEL_EXPORTER_OTLP_ENDPOINT` autom
 
 Use `quill -v analyze ...` to see export activity in the console.
 
+## Limitations
+
+Beakpoint does not yet support the following Anthropic pricing dimensions. These are all coming soon:
+
+- Prompt cache write token pricing
+- Batch API discount pricing
+- Fast mode pricing
+- Data residency pricing multiplier
+- Web search per-request pricing
+- Code execution runtime billing
+- Managed Agents session runtime pricing
+- Platform on AWS CCU billing conversion
+- Platform on Microsoft Foundry CCU billing conversion
+
 ## License
 
 See [LICENSE](LICENSE).

@@ -93,3 +93,47 @@ def test_shutdown_clears_department():
     assert get_department() == "M&A"
     shutdown_tracing()
     assert get_department() is None
+
+
+def test_processor_propagates_department_to_child_spans():
+    """SpanProcessor injects app.user.org.id onto auto-instrumented spans."""
+    init_tracing(department="Marketing")
+    tracer = trace.get_tracer("test")
+    with tracer.start_as_current_span(
+        "anthropic.chat",
+        attributes={"gen_ai.provider.name": "anthropic"},
+    ) as span:
+        assert span.attributes["app.user.org.id"] == "Marketing"
+
+
+def test_processor_skips_department_when_not_set():
+    """SpanProcessor does not inject app.user.org.id when department is None."""
+    init_tracing()
+    tracer = trace.get_tracer("test")
+    with tracer.start_as_current_span(
+        "anthropic.chat",
+        attributes={"gen_ai.provider.name": "anthropic"},
+    ) as span:
+        assert "app.user.org.id" not in span.attributes
+
+
+def test_processor_sets_cloud_provider_from_gen_ai_provider_name():
+    """SpanProcessor sets cloud.provider from gen_ai.provider.name."""
+    init_tracing()
+    tracer = trace.get_tracer("test")
+    with tracer.start_as_current_span(
+        "anthropic.chat",
+        attributes={"gen_ai.provider.name": "anthropic"},
+    ) as span:
+        assert span.attributes["cloud.provider"] == "anthropic"
+
+
+def test_processor_sets_cloud_provider_openai():
+    """SpanProcessor sets cloud.provider to openai for OpenAI spans."""
+    init_tracing()
+    tracer = trace.get_tracer("test")
+    with tracer.start_as_current_span(
+        "openai.chat",
+        attributes={"gen_ai.provider.name": "openai"},
+    ) as span:
+        assert span.attributes["cloud.provider"] == "openai"

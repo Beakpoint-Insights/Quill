@@ -17,10 +17,13 @@ _department: str | None = None
 
 
 class _GenAiSystemProcessor(SpanProcessor):
-    """Copy ``gen_ai.provider.name`` to ``gen_ai.system`` on span start.
+    """Enrich auto-instrumented GenAI spans on start.
 
-    Modern OTel GenAI instrumentors emit ``gen_ai.provider.name`` but
-    Beakpoint cost calculation requires ``gen_ai.system``.
+    - Copies ``gen_ai.provider.name`` to ``gen_ai.system`` (Beakpoint
+      cost calculation requires ``gen_ai.system``).
+    - Propagates ``app.user.org.id`` (department) from the module-level
+      ``_department`` so that every LLM span carries the attribution tag,
+      not only the parent ``quill.analyze`` span.
     """
 
     def on_start(self, span: Span, parent_context: object = None) -> None:
@@ -30,6 +33,8 @@ class _GenAiSystemProcessor(SpanProcessor):
         provider_name = attrs.get("gen_ai.provider.name")
         if provider_name and not attrs.get("gen_ai.system"):
             span.set_attribute("gen_ai.system", str(provider_name))
+        if _department is not None and not attrs.get("app.user.org.id"):
+            span.set_attribute("app.user.org.id", _department)
 
     def on_end(self, span: ReadableSpan) -> None:
         pass

@@ -9,7 +9,17 @@
 
 AI-powered legal document analyzer that routes work across multiple LLM providers and model tiers, mirroring how a law firm staffs tasks from clerk to senior partner.
 
-Built to showcase [Beakpoint](https://beakpoint.io) token usage tracking, multi-model cost attribution, and per-project spend analysis using real OpenTelemetry instrumentation.
+## Showcasing Beakpoint LLM cost attribution and usage tracking
+
+This is built to showcase [Beakpoint](https://beakpoint.io) token usage tracking, multi-model cost attribution, and per-project spend analysis using real OpenTelemetry instrumentation.
+
+Consider this scenario: your company has built a legal document review tool that uses multiple LLM providers and model tiers. You want to know how much each department is spending, which LLM provider is the most expensive, and which project is driving the most cost. Quill demonstrates how to instrument your LLM calls with OpenTelemetry and export traces to Beakpoint for this kind of analysis.
+
+| Cost by Department                                                                                                                                         | Cost by LLM Provider                                                                                                                        | Cost by Project                                                                                                                                   |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![Cost Breakdown By Department.png](images/thumbnails/Cost%20Breakdown%20By%20Department.png)](images/screenshots/Cost%20Breakdown%20By%20Department.png) | [![Cost Breakdown by Model.png](images/thumbnails/Cost%20Breakdown%20by%20Model.png)](images/screenshots/Cost%20Breakdown%20by%20Model.png) | [![Cost Breakdown by Project.png](images/thumbnails/Cost%20Breakdown%20by%20Project.png)](images/screenshots/Cost%20Breakdown%20by%20Project.png) |
+| The tax team is the heaviest user of Quill.                                                                                                                | Anthropic is the most expensive LLM provider                                                                                                | The "Review new Services Agreement" project is the most expensive.                                                                                |
+
 
 > [!IMPORTANT]
 > This application isn't really meant to give you legal advice. It's a demo of how to instrument LLM calls for cost attribution and usage tracking. Relying on it to make legal decisions is a bad idea.

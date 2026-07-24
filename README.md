@@ -16,7 +16,14 @@ Once your app sends traces to Beakpoint, you can answer questions like these:
 | Which department spends the most?                                                                                                                          | Which LLM provider costs the most?                                                                                                          | Which project is driving spend?                                                                                                                   |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | [![Cost Breakdown By Department.png](images/thumbnails/Cost%20Breakdown%20By%20Department.png)](images/screenshots/Cost%20Breakdown%20By%20Department.png) | [![Cost Breakdown by Model.png](images/thumbnails/Cost%20Breakdown%20by%20Model.png)](images/screenshots/Cost%20Breakdown%20by%20Model.png) | [![Cost Breakdown by Project.png](images/thumbnails/Cost%20Breakdown%20by%20Project.png)](images/screenshots/Cost%20Breakdown%20by%20Project.png) |
-| See which teams to charge back for LLM usage.                                                                                                              | Compare spend across Anthropic, OpenAI, and others.                                                                                         | Find which projects are driving the most cost.                                                                                                    |
+| Tax spent 123 dollars this month, Field Services spent 80. Stop splitting the LLM bill evenly and charge each department for what they actually used.       | Anthropic accounts for 74% of total spend. Know where to negotiate, optimize, or shift workloads.                                           | 795 review tasks from Services Agreements to NDAs. See which types of legal work drive the most LLM cost.                                         |
+
+**In Quill's world**, a company runs AI-powered legal document review across 12 departments. Without Beakpoint, the monthly LLM bill gets split evenly or absorbed as overhead. With Beakpoint, the company can:
+
+- **Charge back accurately**: Tax spent 123 dollars this month, Field Services spent 80. Bill each department for what they actually used.
+- **Optimize provider spend**: Anthropic handles 74% of the work. Is it worth 3x more than OpenAI for similar reviews?
+- **Catch cost spikes early**: Something changed on July 22. A new department? A model switch? You'd see it immediately.
+- **Prove ROI**: A Services Agreement review costs a couple dollars in LLM fees. If a lawyer charges 400 dollars an hour and that review used to take two hours, the savings are clear.
 
 **Want to see this for your own LLM usage?** [Request a demo](https://beakpoint.io/demo)
 
@@ -33,7 +40,7 @@ Adding Beakpoint to your Python app takes about 100 lines of instrumentation cod
    pip install opentelemetry-instrumentation-anthropic opentelemetry-instrumentation-openai-v2
    ```
 
-2. **Call `.instrument()` on each instrumentor.** This gives you token counts, model names, and provider info on every LLM call automatically.
+2. **Call `.instrument()` on each instrumentor.** After this, every LLM API call automatically emits a span with token counts, model name, and provider info. You don't write any code for token counting.
 
 3. **Add a small `SpanProcessor` to set `gen_ai.system`.** The auto-instrumentors set `gen_ai.provider.name`, but Beakpoint needs `gen_ai.system` for pricing lookups. A few lines in an `on_start` hook copies one to the other. (See [`_GenAiSystemProcessor` in tracing.py](src/quill/tracing.py) for the exact pattern.)
 
@@ -47,7 +54,9 @@ Adding Beakpoint to your Python app takes about 100 lines of instrumentation cod
 
 6. **Add attribution attributes** where you want cost breakdowns: `app.user.org.id` for department, `code.function.name` for function-level cost slicing.
 
-No Beakpoint-specific SDK. Standard OTLP/HTTP. If you already export traces somewhere, you can export to Beakpoint in parallel.
+No Beakpoint-specific SDK. Standard OTLP/HTTP. Trace export is async and batched (default flush interval is ~60 seconds), so it adds no latency to your LLM calls. If you already export traces somewhere, you can export to Beakpoint in parallel.
+
+Quill demonstrates the direct instrumentation approach. You can also route traces through your own OTel collector (useful when you want to add attribution tags centrally for many apps instead of modifying each one) or use Wingman for guided setup of a single app.
 
 > **📖 Full setup guide:** [Track LLM Costs with Beakpoint](https://docs.beakpoint.io/docs/tasks/getting-started/track-llm-costs)
 

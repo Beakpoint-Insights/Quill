@@ -32,16 +32,16 @@ def test_init_creates_tracer_provider():
     assert trace.get_tracer_provider() is provider
 
 
-def test_default_service_name(monkeypatch):
-    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
+def test_service_name_is_always_quill(monkeypatch):
+    monkeypatch.delenv("QUILL_PROJECT", raising=False)
     provider = init_tracing()
     assert provider.resource.attributes.get("service.name") == "quill"
 
 
-def test_custom_service_name(monkeypatch):
-    monkeypatch.setenv("OTEL_SERVICE_NAME", "quill-test")
-    provider = init_tracing()
-    assert provider.resource.attributes.get("service.name") == "quill-test"
+def test_project_sets_quill_project():
+    provider = init_tracing(project="Acme-Acquisition")
+    assert provider.resource.attributes.get("service.name") == "quill"
+    assert provider.resource.attributes.get("quill.project") == "Acme-Acquisition"
 
 
 def test_anthropic_instrumentation_produces_spans(monkeypatch, anthropic_response):

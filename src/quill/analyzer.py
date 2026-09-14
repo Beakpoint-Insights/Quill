@@ -305,7 +305,7 @@ def analyze_document(
         span_attrs["quill.doc_type"] = doc_type
     dept = get_department()
     if dept is not None:
-        span_attrs["app.user.org.id"] = dept
+        span_attrs["department"] = dept
 
     with tracer.start_as_current_span(
         "quill.analyze",
@@ -453,7 +453,7 @@ def analyze_document_all_roles(
         all_span_attrs["quill.doc_type"] = doc_type
     dept = get_department()
     if dept is not None:
-        all_span_attrs["app.user.org.id"] = dept
+        all_span_attrs["department"] = dept
 
     _preflight_check_keys(roles, api_key)
 

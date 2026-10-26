@@ -10,6 +10,7 @@ from quill.cache import ResponseCache
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+os.environ.pop("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)
 os.environ.pop("OTEL_EXPORTER_OTLP_HEADERS", None)
 
 
@@ -17,6 +18,7 @@ os.environ.pop("OTEL_EXPORTER_OTLP_HEADERS", None)
 def _no_otel_export(monkeypatch: pytest.MonkeyPatch) -> None:
     """Prevent every test from exporting spans to a real collector."""
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_HEADERS", raising=False)
 
 

@@ -27,10 +27,10 @@ def _run_attribution_check(script: str) -> None:
 
 
 class TestProjectAttribution:
-    """Verify --project maps to service.name on exported spans."""
+    """Verify --project maps to quill.project on exported spans."""
 
-    def test_project_sets_service_name_on_spans(self):
-        """Exported spans carry service.name from --project."""
+    def test_project_sets_quill_project_on_spans(self):
+        """Exported spans carry quill.project from --project."""
         _run_attribution_check("""
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
@@ -50,15 +50,16 @@ provider.force_flush()
 spans = exporter.get_finished_spans()
 assert len(spans) > 0, "No spans exported"
 for span in spans:
-    assert span.resource.attributes["service.name"] == "Acme-Acquisition"
+    assert span.resource.attributes["service.name"] == "quill"
+    assert span.resource.attributes["quill.project"] == "Acme-Acquisition"
 """)
 
 
 class TestDepartmentAttribution:
-    """Verify --department maps to app.user.org.id on analyzer spans."""
+    """Verify --department maps to department on analyzer spans."""
 
     def test_department_on_analyze_span(self):
-        """app.user.org.id is set on quill.analyze spans."""
+        """department is set on quill.analyze spans."""
         _run_attribution_check("""
 from unittest.mock import patch
 from anthropic.types import Message, TextBlock, Usage
@@ -97,41 +98,41 @@ spans = exporter.get_finished_spans()
 analyze_spans = [s for s in spans if s.name == "quill.analyze"]
 assert len(analyze_spans) == 1, f"Expected 1 analyze span, got {len(analyze_spans)}"
 attrs = dict(analyze_spans[0].attributes)
-assert attrs["app.user.org.id"] == "M&A", f"Got {attrs.get('app.user.org.id')!r}"
+assert attrs["department"] == "M&A", f"Got {attrs.get('department')!r}"
 """)
 
     def test_department_not_on_resource(self):
-        """app.user.org.id is NOT a resource attribute."""
+        """department is NOT a resource attribute."""
         _run_attribution_check("""
 from quill.tracing import init_tracing
 
 provider = init_tracing(project="Test", department="M&A")
 attrs = provider.resource.attributes
-assert "app.user.org.id" not in attrs, "department should be span-level only"
+assert "department" not in attrs, "department should be span-level only"
 """)
 
 
-class TestNamespaceAlwaysQuill:
-    """Verify service.namespace is always 'quill'."""
+class TestServiceNameAlwaysQuill:
+    """Verify service.name is always 'quill'."""
 
-    def test_namespace_always_quill(self):
-        """service.namespace is 'quill' regardless of flags."""
+    def test_service_name_always_quill(self):
+        """service.name is 'quill' regardless of flags."""
         _run_attribution_check("""
 from quill.tracing import init_tracing
 
 provider = init_tracing(project="Acme", department="M&A")
-assert provider.resource.attributes["service.namespace"] == "quill"
+assert provider.resource.attributes["service.name"] == "quill"
 """)
 
-    def test_namespace_quill_without_flags(self):
-        """service.namespace is 'quill' with no flags."""
+    def test_service_name_quill_without_flags(self):
+        """service.name is 'quill' with no flags."""
         _run_attribution_check("""
 import os
-os.environ.pop("OTEL_SERVICE_NAME", None)
+os.environ.pop("QUILL_PROJECT", None)
 from quill.tracing import init_tracing
 
 provider = init_tracing()
-assert provider.resource.attributes["service.namespace"] == "quill"
+assert provider.resource.attributes["service.name"] == "quill"
 """)
 
 
@@ -139,8 +140,8 @@ class TestFullPipeline:
     """Verify the complete attribution pipeline end-to-end."""
 
     def test_all_attributes_correct(self):
-        """Full pipeline: service.name from project, service.namespace
-        is quill, app.user.org.id from department on spans."""
+        """Full pipeline: service.name is quill, quill.project from project,
+        department from department on spans."""
         _run_attribution_check("""
 from unittest.mock import patch
 from anthropic.types import Message, TextBlock, Usage
@@ -180,14 +181,14 @@ assert len(spans) > 0
 # Resource attributes (same on all spans)
 for span in spans:
     r = span.resource.attributes
-    assert r["service.name"] == "Acme-Acquisition"
-    assert r["service.namespace"] == "quill"
-    assert "app.user.org.id" not in r
+    assert r["service.name"] == "quill"
+    assert r["quill.project"] == "Acme-Acquisition"
+    assert "department" not in r
 
 # Span-level attribute on quill.analyze
 analyze_span = [s for s in spans if s.name == "quill.analyze"][0]
 attrs = dict(analyze_span.attributes)
-assert attrs["app.user.org.id"] == "Litigation"
+assert attrs["department"] == "Litigation"
 assert "quill.role" in attrs
 assert "quill.model" in attrs
 """)

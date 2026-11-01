@@ -23,37 +23,37 @@ def teardown_function():
     _reset_otel()
 
 
-def test_namespace_is_always_quill():
-    """service.namespace is always 'quill' regardless of flags."""
+def test_service_name_is_always_quill():
+    """service.name is always 'quill' regardless of flags."""
     provider = init_tracing(project="Acme", department="M&A")
-    assert provider.resource.attributes["service.namespace"] == "quill"
+    assert provider.resource.attributes["service.name"] == "quill"
 
 
-def test_namespace_quill_without_flags(monkeypatch):
-    """service.namespace is 'quill' even with no flags."""
-    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
-    provider = init_tracing()
-    assert provider.resource.attributes["service.namespace"] == "quill"
-
-
-def test_project_sets_service_name():
-    """--project sets service.name."""
-    provider = init_tracing(project="Acme-Acquisition")
-    assert provider.resource.attributes["service.name"] == "Acme-Acquisition"
-
-
-def test_default_service_name_without_project(monkeypatch):
-    """service.name defaults to 'quill' when --project is not set."""
-    monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
+def test_service_name_quill_without_flags(monkeypatch):
+    """service.name is 'quill' even with no flags."""
+    monkeypatch.delenv("QUILL_PROJECT", raising=False)
     provider = init_tracing()
     assert provider.resource.attributes["service.name"] == "quill"
 
 
-def test_project_takes_precedence_over_env_var(monkeypatch):
-    """--project overrides OTEL_SERVICE_NAME env var."""
-    monkeypatch.setenv("OTEL_SERVICE_NAME", "quill-from-env")
+def test_project_sets_quill_project():
+    """--project sets quill.project."""
     provider = init_tracing(project="Acme-Acquisition")
-    assert provider.resource.attributes["service.name"] == "Acme-Acquisition"
+    assert provider.resource.attributes["quill.project"] == "Acme-Acquisition"
+
+
+def test_default_no_quill_project_without_project(monkeypatch):
+    """quill.project is absent when --project is not set."""
+    monkeypatch.delenv("QUILL_PROJECT", raising=False)
+    provider = init_tracing()
+    assert "quill.project" not in provider.resource.attributes
+
+
+def test_project_takes_precedence_over_env_var(monkeypatch):
+    """--project overrides QUILL_PROJECT env var."""
+    monkeypatch.setenv("QUILL_PROJECT", "quill-from-env")
+    provider = init_tracing(project="Acme-Acquisition")
+    assert provider.resource.attributes["quill.project"] == "Acme-Acquisition"
 
 
 def test_department_stored_for_span_use():
@@ -72,7 +72,7 @@ def test_department_not_on_resource():
     """Department is NOT set as a resource attribute."""
     provider = init_tracing(department="M&A")
     attrs = provider.resource.attributes
-    assert "app.user.org.id" not in attrs
+    assert "department" not in attrs
 
 
 def test_gen_ai_system_not_on_resource():
@@ -96,25 +96,25 @@ def test_shutdown_clears_department():
 
 
 def test_processor_propagates_department_to_child_spans():
-    """SpanProcessor injects app.user.org.id onto auto-instrumented spans."""
+    """SpanProcessor injects department onto auto-instrumented spans."""
     init_tracing(department="Marketing")
     tracer = trace.get_tracer("test")
     with tracer.start_as_current_span(
         "anthropic.chat",
         attributes={"gen_ai.provider.name": "anthropic"},
     ) as span:
-        assert span.attributes["app.user.org.id"] == "Marketing"
+        assert span.attributes["department"] == "Marketing"
 
 
 def test_processor_skips_department_when_not_set():
-    """SpanProcessor does not inject app.user.org.id when department is None."""
+    """SpanProcessor does not inject department when department is None."""
     init_tracing()
     tracer = trace.get_tracer("test")
     with tracer.start_as_current_span(
         "anthropic.chat",
         attributes={"gen_ai.provider.name": "anthropic"},
     ) as span:
-        assert "app.user.org.id" not in span.attributes
+        assert "department" not in span.attributes
 
 
 def test_processor_sets_cloud_provider_from_gen_ai_provider_name():

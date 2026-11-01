@@ -22,9 +22,9 @@ class _GenAiSystemProcessor(SpanProcessor):
 
     - Copies ``gen_ai.provider.name`` to ``gen_ai.system`` (Beakpoint
       cost calculation requires ``gen_ai.system``).
-    - Propagates ``app.user.org.id`` (department) from the module-level
-      ``_department`` so that every LLM span carries the attribution tag,
-      not only the parent ``quill.analyze`` span.
+    - Propagates ``department`` from the module-level ``_department``
+      so that every LLM span carries the attribution tag, not only the
+      parent ``quill.analyze`` span.
     - Sets ``cloud.provider`` from the resolved provider name.
     """
 
@@ -39,8 +39,8 @@ class _GenAiSystemProcessor(SpanProcessor):
                 span.set_attribute("gen_ai.system", provider_str)
             if not attrs.get("cloud.provider"):
                 span.set_attribute("cloud.provider", provider_str)
-        if _department is not None and not attrs.get("app.user.org.id"):
-            span.set_attribute("app.user.org.id", _department)
+        if _department is not None and not attrs.get("department"):
+            span.set_attribute("department", _department)
 
     def on_end(self, span: ReadableSpan) -> None:
         pass
@@ -71,8 +71,8 @@ def init_tracing(
     Idempotent: returns the existing provider if already initialized.
 
     Args:
-        project: Project or matter name set as ``service.name``.
-        department: Department name stored for ``app.user.org.id``
+        project: Project or matter name set as ``quill.project``.
+        department: Department name stored for ``department``
             span-level attribution.
 
     Returns:
@@ -86,12 +86,13 @@ def init_tracing(
 
     from quill import __version__
 
-    service_name = project or os.environ.get("OTEL_SERVICE_NAME", "quill")
     attributes: dict[str, str] = {
-        "service.name": service_name,
-        "service.namespace": "quill",
+        "service.name": "quill",
         "service.version": __version__,
     }
+    project_name = project or os.environ.get("QUILL_PROJECT")
+    if project_name:
+        attributes["quill.project"] = project_name
     resource = Resource.create(attributes)
 
     _provider = TracerProvider(resource=resource)

@@ -90,3 +90,37 @@ def test_anthropic_instrumentation_produces_spans(monkeypatch, anthropic_respons
 def test_shutdown_is_clean():
     init_tracing()
     shutdown_tracing()
+
+
+def test_no_exporter_without_an_endpoint(monkeypatch):
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
+    with patch("quill.tracing.OTLPSpanExporter") as exporter:
+        init_tracing()
+    exporter.assert_not_called()
+
+
+def test_base_endpoint_lets_the_sdk_append_v1_traces(monkeypatch):
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.beakpoint.io")
+    with patch("quill.tracing.OTLPSpanExporter") as exporter:
+        init_tracing()
+    exporter.assert_called_once_with()
+
+
+def test_traces_endpoint_is_read_by_the_sdk(monkeypatch):
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "https://otel.beakpoint.io/v1/traces"
+    )
+    with patch("quill.tracing.OTLPSpanExporter") as exporter:
+        init_tracing()
+    exporter.assert_called_once_with()
+
+
+def test_legacy_full_traces_url_is_used_as_is(monkeypatch):
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_ENDPOINT", "https://otel.beakpoint.io/api/traces"
+    )
+    with patch("quill.tracing.OTLPSpanExporter") as exporter:
+        init_tracing()
+    exporter.assert_called_once_with(endpoint="https://otel.beakpoint.io/api/traces")

@@ -1,6 +1,7 @@
 """OpenTelemetry tracing setup for Quill."""
 
 import os
+from urllib.parse import urlsplit
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -96,10 +97,15 @@ def init_tracing(
     _provider = TracerProvider(resource=resource)
     _provider.add_span_processor(_GenAiSystemProcessor())
 
+    # A base URL (https://otel.beakpoint.io) is left to the SDK, which appends
+    # /v1/traces and also honours OTEL_EXPORTER_OTLP_TRACES_ENDPOINT. A URL
+    # that already has a path (the legacy .../api/traces) is used as is.
     endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-    if endpoint:
+    if endpoint and urlsplit(endpoint).path.strip("/"):
         exporter = OTLPSpanExporter(endpoint=endpoint)
         _provider.add_span_processor(BatchSpanProcessor(exporter))
+    elif endpoint or os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"):
+        _provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 
     trace.set_tracer_provider(_provider)
     instrumentor = AnthropicInstrumentor()
